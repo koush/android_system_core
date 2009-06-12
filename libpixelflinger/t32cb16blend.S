@@ -1,6 +1,7 @@
 /* libs/pixelflinger/t32cb16blend.S
 **
 ** Copyright 2006, The Android Open Source Project
+** Copyright (c) 2009, Code Aurora Forum. All rights reserved.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License"); 
 ** you may not use this file except in compliance with the License. 
@@ -159,7 +160,7 @@ aligned:
     subs    r2, r2, #2
     blo     9f
 
-    // The main loop is unrolled twice and processes 4 pixels
+    // The main loop is unrolled thrice and process 6 pixels
 8:  ldmia   r1!, {r4, r5}
     // stream the source
     pld     [r1, #32]
@@ -191,12 +192,25 @@ aligned:
     pixel   r3, r5, r12, 16
     str     r12, [r0, #-4]
 
-    
+    // 3rd iteration of the loop, don't stream anything
+    subs    r2, r2, #2
+    movlt   r4, r5
+    blt     9f
+    ldmia   r1!, {r4, r5}
+    add     r0, r0, #4
+    orrs    r3, r4, r5
+    beq     7f
+    ldr     r3, [r0, #-4]
+    pixel   r3, r4, r12, 0
+    pixel   r3, r5, r12, 16
+    str     r12, [r0, #-4]
+
 7:  subs    r2, r2, #2
-    bhs     8b
-    mov     r4, r5
+    movlt   r4, r5
+    blo     9f
+    b       8b
 
 9:  adds    r2, r2, #1
-    ldmlofd sp!, {r4-r7, lr}        // return
-    bxlo    lr
-    b       last
+    bhs     last
+    ldmfd sp!, {r4-r7, lr}        // return
+    bx      lr
