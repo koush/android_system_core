@@ -156,11 +156,23 @@ int alarm_main(int argc, char *argv[])
 			}
 			printf("got alarm %x\n", res);
 			waitalarmmask &= ~res;
-			nfd = open("/sys/android_power/acquire_full_wake_lock", O_RDWR);
+                        nfd = open("/sys/power/wake_lock", O_RDWR);
+                        if(nfd < 0){
+                                nfd = open("/sys/android_power/acquire_full_wake_lock",O_RDWR);
+                                if(nfd < 0){
+                                        fprintf(stderr, "unable to open wake lock file");
+                                }
+                        }
 			write(nfd, wake_lock_id, sizeof(wake_lock_id) - 1);
 			close(nfd);
 			//sleep(5);
-			nfd = open("/sys/android_power/release_wake_lock", O_RDWR);
+                        nfd = open("/sys/power/wake_unlock", O_RDWR);
+                        if(nfd < 0){
+                                nfd = open("/sys/android_power/release_wake_lock",O_RDWR);
+                                if(nfd < 0){
+                                        fprintf(stderr, "unable to open wake unlock file");
+                                }
+                        }
 			write(nfd, wake_lock_id, sizeof(wake_lock_id) - 1);
 			close(nfd);
 		}
