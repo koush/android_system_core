@@ -484,10 +484,15 @@ void property_init(void)
     load_properties_from_file(PROP_PATH_RAMDISK_DEFAULT);
 }
 
-int start_property_service(void)
+int start_property_service(char* hardware)
 {
     int fd;
-
+    
+    if (sizeof(hardware) > 0) {
+        char props[64];
+        snprintf(props, sizeof(props), "/system/build.%s.prop", hardware);
+        load_properties_from_file(props);
+    }
     load_properties_from_file(PROP_PATH_SYSTEM_BUILD);
     load_properties_from_file(PROP_PATH_SYSTEM_DEFAULT);
     load_properties_from_file(PROP_PATH_LOCAL_OVERRIDE);

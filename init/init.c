@@ -921,7 +921,7 @@ int main(int argc, char **argv)
          * after the ro.foo properties are set above so
          * that /data/local.prop cannot interfere with them.
          */
-    property_set_fd = start_property_service();
+    property_set_fd = start_property_service(hardware);
 
     /* create a signalling mechanism for the sigchld handler */
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, s) == 0) {
