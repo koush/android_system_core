@@ -20,7 +20,7 @@
 extern void handle_property_fd(int fd);
 extern void handle_property_set_fd(int fd);
 extern void property_init(void);
-extern int start_property_service(void);
+extern int start_property_service(char *data);
 void get_property_workspace(int *fd, int *sz);
 extern const char* property_get(const char *name);
 extern int property_set(const char *name, const char *value);
