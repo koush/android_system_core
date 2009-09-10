@@ -33,22 +33,6 @@ loglevel 3
     write /proc/sys/kernel/panic_on_oops 1
     write /proc/sys/kernel/hung_task_timeout_secs 0
     write /proc/cpu/alignment 4
-    write /proc/sys/kernel/sched_latency_ns 10000000
-    write /proc/sys/kernel/sched_wakeup_granularity_ns 2000000
-    write /proc/sys/kernel/sched_compat_yield 1
-
-# Create cgroup mount points for process groups
-    mkdir /dev/cpuctl
-    mount cgroup none /dev/cpuctl cpu
-    chown sytem system /dev/cpuctl
-    chown system system /dev/cpuctl/tasks
-    chmod 0777 /dev/cpuctl/tasks
-    write /dev/cpuctl/cpu.shares 1024
-
-    mkdir /dev/cpuctl/bg_non_interactive
-    chown system system /dev/cpuctl/bg_non_interactive/tasks
-    chmod 0777 /dev/cpuctl/bg_non_interactive/tasks
-    write /dev/cpuctl/bg_non_interactive/cpu.shares 52
 
 # mount mtd partitions
     # Mount /system rw first to give the filesystem a chance to save a checkpoint
@@ -65,6 +49,29 @@ loglevel 3
     mount yaffs2 mtd@userdata /data nodev
     chown system system /data
     chmod 0771 /data
+
+    # Create dump dir and collect dumps.
+    # Do this before we mount cache so eventually we can use cache for
+    # storing dumps on platforms which do not have a dedicated dump partition.
+    mkdir /data/dontpanic
+    chown root system /data/dontpanic
+    chmod 0750 /data/dontpanic
+
+    # Collect apanic data, free resources and re-arm trigger
+    copy /proc/apanic_console /data/dontpanic/apanic_console
+    chown root system /data/dontpanic/apanic_console
+    chmod 0640 /data/dontpanic/apanic_console
+
+    copy /proc/apanic_threads /data/dontpanic/apanic_threads
+    chown root system /data/dontpanic/apanic_threads
+    chmod 0640 /data/dontpanic/apanic_threads
+
+    write /proc/apanic_console 1
+
+    # Collect ramconsole data
+    copy /proc/last_kmsg /data/dontpanic/last_kmsg
+    chown root system /data/dontpanic/last_kmsg
+    chmod 0640 /data/dontpanic/last_kmsg
 
     # Same reason as /data above
     mount yaffs2 mtd@cache /cache nosuid nodev
@@ -286,7 +293,7 @@ service hcid /system/bin/hcid -s -n -f /etc/bluez/hcid.conf
     socket dbus_bluetooth stream 660 bluetooth bluetooth
     # init.rc does not yet support applying capabilities, so run as root and
     # let hcid drop uid to bluetooth with the right linux capabilities
-    group bluetooth net_bt_admin misc
+    group bluetooth net_bt_admin misc 
     disabled
 
 service hfag /system/bin/sdptool add --channel=10 HFAG
