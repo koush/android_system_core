@@ -510,3 +510,65 @@ int do_device(int nargs, char **args) {
                           decode_uid(args[4]), prefix);
     return 0;
 }
+
+int do_copy(int nargs, char **args)
+{
+    char *buffer = NULL;
+    int rc = 0;
+    int fd1 = -1, fd2 = -1;
+    struct stat info;
+    int brtw, brtr;
+    char *p;
+
+    if (nargs != 3)
+        return -1;
+
+    if (stat(args[1], &info) < 0)
+        return -1;
+
+    if ((fd1 = open(args[1], O_RDONLY)) < 0)
+        goto out_err;
+
+    if ((fd2 = open(args[2], O_WRONLY|O_CREAT, 0660)) < 0)
+        goto out_err;
+
+    if (!(buffer = malloc(info.st_size)))
+        goto out_err;
+
+    p = buffer;
+    brtr = info.st_size;
+    while(brtr) {
+        rc = read(fd1, p, brtr);
+        if (rc < 0)
+            goto out_err;
+        if (rc == 0)
+            break;
+        p += rc;
+        brtr -= rc;
+    }
+
+    p = buffer;
+    brtw = info.st_size;
+    while(brtw) {
+        rc = write(fd2, p, brtw);
+        if (rc < 0)
+            goto out_err;
+        if (rc == 0)
+            break;
+        p += rc;
+        brtw -= rc;
+    }
+
+    rc = 0;
+    goto out;
+out_err:
+    rc = -1;
+out:
+    if (buffer)
+        free(buffer);
+    if (fd1 >= 0)
+        close(fd1);
+    if (fd2 >= 0)
+        close(fd2);
+    return rc;
+}
