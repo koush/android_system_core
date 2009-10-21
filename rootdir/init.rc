@@ -33,6 +33,30 @@ loglevel 3
     write /proc/sys/kernel/panic_on_oops 1
     write /proc/sys/kernel/hung_task_timeout_secs 0
     write /proc/cpu/alignment 4
+    write /proc/sys/kernel/sched_latency_ns 10000000
+    write /proc/sys/kernel/sched_wakeup_granularity_ns 2000000
+    write /proc/sys/kernel/sched_compat_yield 1
+    write /proc/sys/kernel/sched_child_runs_first 0
+
+# Create cgroup mount points for process groups
+    mkdir /dev/cpuctl
+    mount cgroup none /dev/cpuctl cpu
+    chown sytem system /dev/cpuctl
+    chown system system /dev/cpuctl/tasks
+    chmod 0777 /dev/cpuctl/tasks
+    write /dev/cpuctl/cpu.shares 1024
+
+    mkdir /dev/cpuctl/fg_boost
+    chown system system /dev/cpuctl/fg_boost/tasks
+    chmod 0777 /dev/cpuctl/fg_boost/tasks
+    write /dev/cpuctl/fg_boost/cpu.shares 1024
+
+    mkdir /dev/cpuctl/bg_non_interactive
+    chown system system /dev/cpuctl/bg_non_interactive/tasks
+    chmod 0777 /dev/cpuctl/bg_non_interactive/tasks
+    # 5.0 %
+    write /dev/cpuctl/bg_non_interactive/cpu.shares 52
+
 
 # mount mtd partitions
     # Mount /system rw first to give the filesystem a chance to save a checkpoint
@@ -154,7 +178,7 @@ on boot
     setprop ro.VISIBLE_APP_MEM 2048
     setprop ro.SECONDARY_SERVER_MEM 4096
     setprop ro.BACKUP_APP_MEM 4096
-    setprop ro.HOME_APP_MEM 4096
+    setprop ro.HOME_APP_MEM 1536
     setprop ro.HIDDEN_APP_MEM 5120
     setprop ro.CONTENT_PROVIDER_MEM 5632
     setprop ro.EMPTY_APP_MEM 6144
@@ -219,7 +243,7 @@ on boot
     setprop net.tcp.buffersize.edge    4093,26280,35040,4096,16384,35040
     setprop net.tcp.buffersize.gprs    4092,8760,11680,4096,8760,11680
 
-    start a2sd
+    start sysinit
 
 on property:cm.filesystem.ready=1
     class_start default
@@ -320,7 +344,7 @@ service installd /system/bin/installd
 service flash_recovery /system/bin/flash_image -d recovery /data/recovery.img
     oneshot
 
-service a2sd /system/bin/logwrapper /system/bin/sh /system/bin/a2sd
+service sysinit /system/bin/logwrapper /system/xbin/busybox run-parts /system/etc/init.d
     disabled
     oneshot
 
