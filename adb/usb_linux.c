@@ -148,15 +148,14 @@ static void find_usb_device(const char *base,
 
 //        DBGX("[ scanning %s ]\n", busname);
         while((de = readdir(devdir))) {
-            unsigned char devdesc[256];
-            unsigned char* bufptr = devdesc;
+            unsigned char devdesc[4096];
+            unsigned char* bufptr = devdesc, *bufend;
             struct usb_device_descriptor* device;
             struct usb_config_descriptor* config;
             struct usb_interface_descriptor* interface;
             struct usb_endpoint_descriptor *ep1, *ep2;
             unsigned zero_mask = 0;
             unsigned vid, pid;
-            int i, interfaces;
             size_t desclength;
 
             if(badname(de->d_name)) continue;
@@ -173,6 +172,7 @@ static void find_usb_device(const char *base,
             }
 
             desclength = adb_read(fd, devdesc, sizeof(devdesc));
+            bufend = bufptr + desclength;
 
                 // should have device and configuration descriptors, and atleast two endpoints
             if (desclength < USB_DT_DEVICE_SIZE + USB_DT_CONFIG_SIZE) {
@@ -182,12 +182,11 @@ static void find_usb_device(const char *base,
             }
 
             device = (struct usb_device_descriptor*)bufptr;
-            bufptr += USB_DT_DEVICE_SIZE;
-
-            if((device->bLength != USB_DT_DEVICE_SIZE) || (device->bDescriptorType != USB_DT_DEVICE)) {
+            if(bufptr > (bufend - USB_DT_DEVICE_SIZE) || (device->bLength < USB_DT_DEVICE_SIZE) || (device->bDescriptorType != USB_DT_DEVICE)) {
                 adb_close(fd);
                 continue;
             }
+            bufptr += device->bLength;
 
             vid = __le16_to_cpu(device->idVendor);
             pid = __le16_to_cpu(device->idProduct);
@@ -196,25 +195,25 @@ static void find_usb_device(const char *base,
 
                 // should have config descriptor next
             config = (struct usb_config_descriptor *)bufptr;
-            bufptr += USB_DT_CONFIG_SIZE;
-            if (config->bLength != USB_DT_CONFIG_SIZE || config->bDescriptorType != USB_DT_CONFIG) {
+            if (bufptr > (bufend - USB_DT_CONFIG_SIZE) || config->bLength < USB_DT_CONFIG_SIZE || config->bDescriptorType != USB_DT_CONFIG) {
                 D("usb_config_descriptor not found\n");
                 adb_close(fd);
                 continue;
             }
+            bufptr += config->bLength;
 
                 // loop through all the interfaces and look for the ADB interface
-            interfaces = config->bNumInterfaces;
-            for (i = 0; i < interfaces; i++) {
-                if (bufptr + USB_DT_ENDPOINT_SIZE > devdesc + desclength)
-                    break;
-
+            while (bufptr <= (bufend - USB_DT_INTERFACE_SIZE)) {
                 interface = (struct usb_interface_descriptor *)bufptr;
-                bufptr += USB_DT_INTERFACE_SIZE;
-                if (interface->bLength != USB_DT_INTERFACE_SIZE ||
-                    interface->bDescriptorType != USB_DT_INTERFACE) {
-                    D("usb_interface_descriptor not found\n");
+                if (bufptr > (bufend - USB_DT_INTERFACE_SIZE)) {
+                    D("usb_interface_descriptor not found: bLength: %d, bDescriptorType: %d\n", interface->bLength, interface->bDescriptorType);
                     break;
+                }
+                bufptr += interface->bLength;
+                if (interface->bLength < USB_DT_INTERFACE_SIZE ||
+                    interface->bDescriptorType != USB_DT_INTERFACE) {
+                    D("usb_interface_descriptor not found: bLength: %d, bDescriptorType: %d\n", interface->bLength, interface->bDescriptorType);
+                    continue;
                 }
 
                 DBGX("bInterfaceClass: %d,  bInterfaceSubClass: %d,"
@@ -228,18 +227,33 @@ static void find_usb_device(const char *base,
 
                     DBGX("looking for bulk endpoints\n");
                         // looks like ADB...
-                    ep1 = (struct usb_endpoint_descriptor *)bufptr;
-                    bufptr += USB_DT_ENDPOINT_SIZE;
-                    ep2 = (struct usb_endpoint_descriptor *)bufptr;
-                    bufptr += USB_DT_ENDPOINT_SIZE;
+                    ep1 = NULL;
+                    do {
+                        if (bufptr > (bufend - USB_DT_ENDPOINT_SIZE)) {
+                            D("endpoint 1 not found\n");
+                            break;
+                        }
+                        ep1 = (struct usb_endpoint_descriptor *)bufptr;
+                        bufptr += ep1->bLength;
+                    } while (ep1->bDescriptorType != USB_DT_ENDPOINT && ep1->bDescriptorType != USB_DT_INTERFACE);
 
-                    if (bufptr > devdesc + desclength ||
-                        ep1->bLength != USB_DT_ENDPOINT_SIZE ||
+                    ep2 = NULL;
+                    do {
+                        if (bufptr > (bufend - USB_DT_ENDPOINT_SIZE)) {
+                            D("endpoint 2 not found\n");
+                            break;
+                        }
+                        ep2 = (struct usb_endpoint_descriptor *)bufptr;
+                        bufptr += ep2->bLength;
+                    } while (ep2->bDescriptorType != USB_DT_ENDPOINT && ep2->bDescriptorType != USB_DT_INTERFACE);
+
+                    if (!ep1 || !ep2 || bufptr > bufend ||
+                        ep1->bLength < USB_DT_ENDPOINT_SIZE ||
                         ep1->bDescriptorType != USB_DT_ENDPOINT ||
-                        ep2->bLength != USB_DT_ENDPOINT_SIZE ||
+                        ep2->bLength < USB_DT_ENDPOINT_SIZE ||
                         ep2->bDescriptorType != USB_DT_ENDPOINT) {
                         D("endpoints not found\n");
-                        break;
+                        continue;
                     }
 
                         // both endpoints should be bulk
@@ -267,10 +281,7 @@ static void find_usb_device(const char *base,
                             interface->bInterfaceNumber, device->iSerialNumber, zero_mask);
 
                     break;
-                } else {
-                    // seek next interface descriptor
-                    bufptr += (USB_DT_ENDPOINT_SIZE * interface->bNumEndpoints);
-                 }
+                }
             } // end of for
 
             adb_close(fd);
