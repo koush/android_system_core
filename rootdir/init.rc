@@ -320,6 +320,16 @@ service hcid /system/bin/hcid -s -n -f /etc/bluez/hcid.conf
     group bluetooth net_bt_admin misc 
     disabled
 
+service obex-client /system/bin/obex-client
+    user bluetooth
+    group bluetooth net_bt_admin misc sdcard_rw
+    disabled
+
+service obexd /system/bin/obexd -n -d --opp --ftp
+    user bluetooth
+    group bluetooth net_bt_admin misc sdcard_rw
+    disabled
+
 service hfag /system/bin/sdptool add --channel=10 HFAG
     user bluetooth
     group bluetooth net_bt_admin
