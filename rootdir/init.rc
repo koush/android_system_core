@@ -325,7 +325,7 @@ service obex-client /system/bin/obex-client
     group bluetooth net_bt_admin misc sdcard_rw
     disabled
 
-service obexd /system/bin/obexd -n -d --opp --ftp
+service obexd /system/bin/obexd -n -d --opp
     user bluetooth
     group bluetooth net_bt_admin misc sdcard_rw
     disabled
