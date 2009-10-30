@@ -385,3 +385,15 @@ service keystore /system/bin/keystore
     group keystore
     socket keystore stream 666
 
+# for USB internet sharing
+service dnsmasq /system/bin/logwrapper /system/bin/dnsmasq -d
+    disabled
+
+service tether_on /system/bin/logwrapper /system/bin/sh /system/bin/usb-tether start
+    disabled
+    oneshot
+
+service tether_off /system/bin/logwrapper /system/bin/sh /system/bin/usb-tether stop
+    disabled
+    oneshot
+
