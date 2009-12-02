@@ -152,12 +152,6 @@ on boot
 # set RLIMIT_NICE to allow priorities from 19 to -20
     setrlimit 13 40 40
 
-# Set threshold for cpufreq
-    write /sys/devices/system/cpu/cpu0/cpufreq/ondemand/up_threshold 40
-    write /sys/devices/system/cpu/cpu0/cpufreq/ondemand/ignore_nice_load 1
-    write /sys/devices/system/cpu/cpu0/cpufreq/ondemand/sampling_rate 2000000
-    write /sys/devices/system/cpu/cpu0/cpufreq/ondemand/powersave_bias 200
-
 # Set timeout value for rmnet stats.
     write /sys/devices/virtual/net/rmnet0/timeout_suspend 5000000
 
@@ -194,6 +188,10 @@ on boot
 
     # Set init its forked children's oom_adj.
     write /proc/1/oom_adj -16
+
+    # Tweak background writeout
+    write /proc/sys/vm/dirty_expire_centisecs 200
+    write /proc/sys/vm/dirty_background_ratio  5
 
     # Permissions for System Server and daemons.
     chown radio system /sys/android_power/state
@@ -325,7 +323,7 @@ service obex-client /system/bin/obex-client
     group bluetooth net_bt_admin misc sdcard_rw
     disabled
 
-service obexd /system/bin/obexd -n -d --opp
+service obexd /system/bin/obexd -n -d --opp --ftp
     user bluetooth
     group bluetooth net_bt_admin misc sdcard_rw
     disabled
