@@ -17,7 +17,8 @@
 #include <machine/cpu-features.h>
 
 /*
- * NOTE: these atomic operations are SMP safe on all architectures. 
+ * NOTE: these atomic operations are SMP safe on all architectures, 
+ * except swap(), see below.
  */
 
 	.text
@@ -54,23 +55,8 @@
  */
  
 android_atomic_write:
-    stmdb   sp!, {r4, lr}
-    mov     r2, r1
-    mov     r1, r0
-1: @ android_atomic_write
-    ldr     r0, [r2]
-    mov     r3, #kernel_atomic_base
-#ifdef __ARM_HAVE_PC_INTERWORK
-    add     lr, pc, #4
-    add     pc, r3, #(kernel_cmpxchg - kernel_atomic_base)
-#else
-    add     r3, r3, #(kernel_cmpxchg - kernel_atomic_base)
-    mov     lr, pc
-    bx      r3
-#endif
-    bcc     1b
-    ldmia   sp!, {r4, lr}
-    bx      lr
+    str     r0, [r1]
+    bx      lr;
 
 /*
  * ----------------------------------------------------------------------------
@@ -80,6 +66,8 @@ android_atomic_write:
  */
  
 android_atomic_inc:
+    .fnstart
+    .save {r4, lr}
     stmdb   sp!, {r4, lr}
     mov     r2, r0
 1: @ android_atomic_inc
@@ -99,6 +87,7 @@ android_atomic_inc:
     sub     r0, r1, #1
     ldmia   sp!, {r4, lr}
     bx      lr
+    .fnend
   
 /*
  * ----------------------------------------------------------------------------
@@ -108,6 +97,8 @@ android_atomic_inc:
  */
  
 android_atomic_dec:
+    .fnstart
+    .save {r4, lr}
     stmdb   sp!, {r4, lr}
     mov     r2, r0
 1: @ android_atomic_dec
@@ -127,6 +118,7 @@ android_atomic_dec:
     add     r0, r1, #1
     ldmia   sp!, {r4, lr}
     bx      lr
+    .fnend
     
 /*
  * ----------------------------------------------------------------------------
@@ -136,6 +128,8 @@ android_atomic_dec:
  */
 
 android_atomic_add:
+    .fnstart
+    .save {r4, lr}
     stmdb   sp!, {r4, lr}
     mov     r2, r1
     mov     r4, r0
@@ -156,6 +150,7 @@ android_atomic_add:
     sub     r0, r1, r4
     ldmia   sp!, {r4, lr}
     bx      lr
+    .fnend
     
     
 /*
@@ -166,6 +161,8 @@ android_atomic_add:
  */
 
 android_atomic_and:
+    .fnstart
+    .save {r4, r5, lr}
     stmdb   sp!, {r4, r5, lr}   
     mov     r2, r1              /* r2 = address */
     mov     r4, r0              /* r4 = the value */
@@ -188,6 +185,7 @@ android_atomic_and:
     mov     r0, r5
     ldmia   sp!, {r4, r5, lr}
     bx      lr
+    .fnend
     
 /*
  * ----------------------------------------------------------------------------
@@ -197,6 +195,8 @@ android_atomic_and:
  */
 
 android_atomic_or:
+    .fnstart
+    .save {r4, r5, lr}
     stmdb   sp!, {r4, r5, lr}   
     mov     r2, r1              /* r2 = address */
     mov     r4, r0              /* r4 = the value */
@@ -219,6 +219,7 @@ android_atomic_or:
     mov     r0, r5
     ldmia   sp!, {r4, r5, lr}
     bx      lr
+    .fnend
 
 /*
  * ----------------------------------------------------------------------------
@@ -227,18 +228,11 @@ android_atomic_or:
  * output: r0 = old value
  */
 
-/* replaced swp instruction with ldrex/strex for ARMv6 & ARMv7 */
+/* FIXME: this is not safe on SMP systems 
+ * a general way to do it is to use kernel_cmpxchg */
+
 android_atomic_swap:
-#if defined (_ARM_HAVE_LDREX_STREX)
-1:  ldrex   r2, [r1]
-    strex   r3, r0, [r1]
-    teq     r3, #0
-    bne     1b
-    mov     r0, r2
-    mcr     p15, 0, r0, c7, c10, 5 /* or, use dmb */
-#else
     swp     r0, r0, [r1]
-#endif
     bx      lr
 
 /*
@@ -249,6 +243,8 @@ android_atomic_swap:
  */
 
 android_atomic_cmpxchg:
+    .fnstart
+    .save {r4, lr}
     stmdb   sp!, {r4, lr}
     mov     r4, r0          /* r4 = save oldvalue */
 1: @ android_atomic_cmpxchg
@@ -270,6 +266,7 @@ android_atomic_cmpxchg:
 2: @ android_atomic_cmpxchg
     ldmia   sp!, {r4, lr}
     bx      lr
+    .fnend
 
 /*
  * ----------------------------------------------------------------------------
