@@ -203,6 +203,9 @@ public:
     virtual void SMLAW(int cc, int y,
                 int Rd, int Rm, int Rs, int Rn) = 0;
 
+    // bit manipulation...
+    virtual void UBFX(int cc, int Rd, int Rn, int lsb, int width) = 0;
+
     // -----------------------------------------------------------------------
     // convenience...
     // -----------------------------------------------------------------------

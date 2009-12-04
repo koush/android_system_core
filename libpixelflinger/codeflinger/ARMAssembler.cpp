@@ -424,5 +424,16 @@ void ARMAssembler::SMLAW(int cc, int y,
     *mPC++ = (cc<<28) | 0x1200080 | (Rd<<16) | (Rn<<12) | (Rs<<8) | (y<<4) | Rm;
 }
 
+#if 0
+#pragma mark -
+#pragma mark Bit manipulation (ARMv7+ only)...
+#endif
+
+// Bit manipulation (ARMv7+ only)...
+void ARMAssembler::UBFX(int cc, int Rd, int Rn, int lsb, int width)
+{
+    *mPC++ = (cc<<28) | 0x7E00000 | ((width-1)<<16) | (Rd<<12) | (lsb<<7) | 0x50 | Rn;
+}
+
 }; // namespace android
 

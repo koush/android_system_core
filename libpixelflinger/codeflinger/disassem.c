@@ -80,6 +80,8 @@
  * f - 1st fp operand (register) (bits 12-14)
  * g - 2nd fp operand (register) (bits 16-18)
  * h - 3rd fp operand (register/immediate) (bits 0-4)
+ * i - bfx lsb literal (bits 7-11)
+ * w - bfx width literal (bits 16-20)
  * b - branch address
  * t - thumb branch address (bits 24, 0-23)
  * k - breakpoint comment (bits 0-3, 8-19)
@@ -122,6 +124,7 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0fe000f0, 0x00c00090, "smull",	"Sdnms" },
     { 0x0fe000f0, 0x00a00090, "umlal",	"Sdnms" },
     { 0x0fe000f0, 0x00e00090, "smlal",	"Sdnms" },
+    { 0x0fe00070, 0x07e00050, "ubfx",   "dmiw" },
     { 0x0d700000, 0x04200000, "strt",	"daW" },
     { 0x0d700000, 0x04300000, "ldrt",	"daW" },
     { 0x0d700000, 0x04600000, "strbt",	"daW" },
@@ -406,6 +409,14 @@ disasm(const disasm_interface_t *di, u_int loc, int altfmt)
 			else
 				di->di_printf("f%d", insn & 7);
 			break;
+        /* i - bfx lsb literal (bits 7-11) */
+        case 'i':
+            di->di_printf("#%d", (insn >> 7) & 31);
+            break;
+        /* w - bfx width literal (bits 16-20) */
+        case 'w':
+            di->di_printf("#%d", 1 + ((insn >> 16) & 31));
+            break;
 		/* b - branch address */
 		case 'b':
 			branch = ((insn << 2) & 0x03ffffff);
