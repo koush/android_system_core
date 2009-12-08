@@ -6,7 +6,7 @@ sysclktz 0
 loglevel 3
 
 # setup the global environment
-    export PATH /sbin:/system/sbin:/system/bin:/system/xbin
+    export PATH /usr/bin:/usr/sbin:/bin:/sbin:/system/sbin:/system/bin:/system/xbin:/system/xbin/bb:/data/local/bin
     export LD_LIBRARY_PATH /system/lib
     export ANDROID_BOOTLOGO 1
     export ANDROID_ROOT /system
@@ -14,6 +14,7 @@ loglevel 3
     export ANDROID_DATA /data
     export EXTERNAL_STORAGE /sdcard
     export BOOTCLASSPATH /system/framework/core.jar:/system/framework/ext.jar:/system/framework/framework.jar:/system/framework/android.policy.jar:/system/framework/services.jar
+    export TERMINFO /system/etc/terminfo
 
 # Backward compatibility
     symlink /system/etc /etc
@@ -66,6 +67,10 @@ loglevel 3
     mount yaffs2 mtd@userdata /data nosuid nodev
     chown system system /data
     chmod 0771 /data
+
+    # Mount compressed filesystems
+    mount squashfs loop@/system/modules/modules.sqf /system/modules ro
+    mount squashfs loop@/system/xbin/xbin.sqf /system/xbin ro
 
     # Create dump dir and collect dumps.
     # Do this before we mount cache so eventually we can use cache for
@@ -163,7 +168,7 @@ on boot
     setprop ro.VISIBLE_APP_MEM 2048
     setprop ro.SECONDARY_SERVER_MEM 4096
     setprop ro.BACKUP_APP_MEM 4096
-    setprop ro.HOME_APP_MEM 4096
+    setprop ro.HOME_APP_MEM 2048
     setprop ro.HIDDEN_APP_MEM 5120
     setprop ro.CONTENT_PROVIDER_MEM 5632
     setprop ro.EMPTY_APP_MEM 6144
@@ -261,13 +266,6 @@ service servicemanager /system/bin/servicemanager
 service vold /system/bin/vold
     socket vold stream 0660 root mount
 
-service nexus /system/bin/nexus
-    socket nexus stream 0660 root system
-    disabled
-
-#service mountd /system/bin/mountd
-#    socket mountd stream 0660 root mount
-
 service debuggerd /system/bin/debuggerd
 
 service ril-daemon /system/bin/rild
@@ -363,3 +361,36 @@ service dumpstate /system/bin/dumpstate -s
     socket dumpstate stream 0660 shell log
     disabled
     oneshot
+
+
+# Clean shutdown
+service reboot /system/bin/shutdown -r
+    disabled
+    oneshot
+
+service poweroff /system/bin/shutdown
+    disabled
+
+# USB internet sharing
+service dnsmasq /system/bin/logwrapper /system/bin/dnsmasq -d
+    disabled
+
+service tether_on /system/bin/logwrapper /system/bin/sh /system/bin/usb-tether start
+    disabled
+    oneshot
+
+# Compcache
+service compcache_on /system/bin/logwrapper /system/bin/sh /system/bin/compcache start
+    disabled
+    oneshot
+
+service compcache_off /system/bin/logwrapper /system/bin/sh /system/bin/compcache stop
+    disabled
+    oneshot
+
+on property:persist.service.compcache=1
+    start compcache_on
+
+on property:persist.service.compcache=0
+    start compcache_off
+
