@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 The Android Open Source Project
+ * Copyright (C) 2009 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,7 @@
  */
 
 /*
- * Android config -- "CYGWIN_NT-5.1".  
- *
- * Cygwin has pthreads, but GDB seems to get confused if you use it to
- * create threads.  By "confused", I mean it freezes up the first time the
- * debugged process creates a thread, even if you use CreateThread.  The
- * mere presence of pthreads linkage seems to cause problems.
+ * Android config -- "android-sh".  Used for SuperH device builds.
  */
 #ifndef _ANDROID_CONFIG_H
 #define _ANDROID_CONFIG_H
@@ -42,15 +37,21 @@
  *
  * HAVE_PTHREADS - use the pthreads library.
  * HAVE_WIN32_THREADS - use Win32 thread primitives.
+ *  -- combine HAVE_CREATETHREAD, HAVE_CREATEMUTEX, and HAVE__BEGINTHREADEX
  */
-#define HAVE_WIN32_THREADS
+#define HAVE_PTHREADS
 
 /*
  * Do we have the futex syscall?
  */
 
-/* #define HAVE_FUTEX */
+#define HAVE_FUTEX
 
+/*
+ * Define if we already have the futex wrapper functions defined. Yes if
+ * compiling against bionic.
+ */
+#define HAVE_FUTEX_WRAPPERS 1
 
 /*
  * Process creation model.  Choose one:
@@ -58,18 +59,14 @@
  * HAVE_FORKEXEC - use fork() and exec()
  * HAVE_WIN32_PROC - use CreateProcess()
  */
-#ifdef __CYGWIN__
-#  define HAVE_FORKEXEC
-#else
-#  define HAVE_WIN32_PROC
-#endif
+#define HAVE_FORKEXEC
 
 /*
  * Process out-of-memory adjustment.  Set if running on Linux,
  * where we can write to /proc/<pid>/oom_adj to modify the out-of-memory
  * badness adjustment.
  */
-/* #define HAVE_OOM_ADJ */
+#define HAVE_OOM_ADJ
 
 /*
  * IPC model.  Choose one:
@@ -79,7 +76,7 @@
  * HAVE_WIN32_IPC - use Win32 IPC (CreateSemaphore, CreateFileMapping).
  * HAVE_ANDROID_IPC - use Android versions (?, mmap).
  */
-#define HAVE_WIN32_IPC
+#define HAVE_ANDROID_IPC
 
 /*
  * Memory-mapping model. Choose one:
@@ -87,40 +84,33 @@
  * HAVE_POSIX_FILEMAP - use the Posix sys/mmap.h
  * HAVE_WIN32_FILEMAP - use Win32 filemaps
  */
-#ifdef __CYGWIN__
 #define  HAVE_POSIX_FILEMAP
-#else
-#define  HAVE_WIN32_FILEMAP
-#endif
 
 /*
  * Define this if you have <termio.h>
  */
-#ifdef __CYGWIN__
-#  define  HAVE_TERMIO_H
-#endif
+#define  HAVE_TERMIO_H
 
 /*
  * Define this if you have <sys/sendfile.h>
  */
-#ifdef __CYGWIN__
-#  define  HAVE_SYS_SENDFILE_H 1
-#endif
+#define  HAVE_SYS_SENDFILE_H 1
 
 /*
  * Define this if you build against MSVCRT.DLL
  */
-#ifndef __CYGWIN__
-#  define HAVE_MS_C_RUNTIME
-#endif
+/* #define HAVE_MS_C_RUNTIME */
 
 /*
  * Define this if you have sys/uio.h
  */
-#ifdef __CYGWIN__
 #define  HAVE_SYS_UIO_H
-#endif
 
+/*
+ * Define this if your platforms implements symbolic links
+ * in its filesystems
+ */
+#define HAVE_SYMLINKS
 
 /*
  * Define this if we have localtime_r().
@@ -135,25 +125,28 @@
 /*
  * Define this if we have ioctl().
  */
-/* #define HAVE_IOCTL */
+#define HAVE_IOCTL
 
 /*
  * Define this if we want to use WinSock.
  */
-#ifndef __CYGWIN__
-#define HAVE_WINSOCK
-#endif
-
-/*
- * Define this if your platforms implements symbolic links
- * in its filesystems
- */
-/* #define HAVE_SYMLINKS */
+/* #define HAVE_WINSOCK */
 
 /*
  * Define this if have clock_gettime() and friends
  */
-/* #define HAVE_POSIX_CLOCKS */
+#define HAVE_POSIX_CLOCKS
+
+/*
+ * Define this if we have pthread_cond_timedwait_monotonic() and
+ * clock_gettime(CLOCK_MONOTONIC).
+ */
+/* #define HAVE_TIMEDWAIT_MONOTONIC */
+
+/*
+ * Define this if we have linux style epoll()
+ */
+#define HAVE_EPOLL
 
 /*
  * Endianness of the target machine.  Choose one:
@@ -162,10 +155,7 @@
  * HAVE_LITTLE_ENDIAN -- we are little endian.
  * HAVE_BIG_ENDIAN -- we are big endian.
  */
-#ifdef __CYGWIN__
 #define HAVE_ENDIAN_H
-#endif
-
 #define HAVE_LITTLE_ENDIAN
 
 /*
@@ -173,8 +163,8 @@
  * agree on the same size.  For desktop systems, use 64-bit values,
  * because some of our libraries (e.g. wxWidgets) expect to be built that way.
  */
-#define _FILE_OFFSET_BITS 64
-#define _LARGEFILE_SOURCE 1
+/* #define _FILE_OFFSET_BITS 64 */
+/* #define _LARGEFILE_SOURCE 1 */
 
 /*
  * Defined if we have the backtrace() call for retrieving a stack trace.
@@ -197,19 +187,59 @@
 #define HAVE_CXXABI 0
 
 /*
+ * Defined if we have the gettid() system call.
+ */
+#define HAVE_GETTID
+
+/*
+ * Defined if we have the sched_setscheduler() call
+ */
+#define HAVE_SCHED_SETSCHEDULER
+
+/*
+ * Add any extra platform-specific defines here.
+ */
+/* #define __linux__ */ /* for SuperH */
+
+/*
+ * Define if we have <malloc.h> header
+ */
+#define HAVE_MALLOC_H
+
+/*
+ * Define if we're running on *our* linux on device or emulator.
+ */
+#define HAVE_ANDROID_OS 1
+
+/*
+ * Define if we have Linux-style non-filesystem Unix Domain Sockets
+ */
+#define HAVE_LINUX_LOCAL_SOCKET_NAMESPACE 1
+
+/*
+ * Define if we have Linux's inotify in <sys/inotify.h>.
+ */
+#define HAVE_INOTIFY 1
+
+/*
+ * Define if we have madvise() in <sys/mman.h>
+ */
+#define HAVE_MADVISE 1
+
+/*
  * Define if tm struct has tm_gmtoff field
  */
-/* #define HAVE_TM_GMTOFF 1 */
+#define HAVE_TM_GMTOFF 1
 
 /*
  * Define if dirent struct has d_type field
  */
-/* #define HAVE_DIRENT_D_TYPE 1 */
+#define HAVE_DIRENT_D_TYPE 1
 
 /*
  * Define if libc includes Android system properties implementation.
  */
-/* #define HAVE_LIBC_SYSTEM_PROPERTIES */
+#define HAVE_LIBC_SYSTEM_PROPERTIES 1
 
 /*
  * Define if system provides a system property server (should be
@@ -218,28 +248,29 @@
 /* #define HAVE_SYSTEM_PROPERTY_SERVER */
 
 /*
- * Define if we have madvise() in <sys/mman.h>
- */
-/*#define HAVE_MADVISE 1*/
-
-/*
- * Add any extra platform-specific defines here.
- */
-#define WIN32 1                 /* stock Cygwin doesn't define these */
-#define _WIN32 1
-#define _WIN32_WINNT 0x0500     /* admit to using >= Win2K */
-
-#define HAVE_WINDOWS_PATHS      /* needed by simulator */
-
-/*
  * What CPU architecture does this platform use?
  */
-#define ARCH_X86
+#define ARCH_SH
+
+/*
+ * Define if the size of enums is as short as possible,
+ */
+/* #define HAVE_SHORT_ENUMS */
 
 /*
  * sprintf() format string for shared library naming.
  */
-#define OS_SHARED_LIB_FORMAT_STR    "lib%s.dll"
+#define OS_SHARED_LIB_FORMAT_STR    "lib%s.so"
+
+/*
+ * Do we have __memcmp16()?
+ *
+ * TODO : Investigate the perfomance impact of __memcmp16()
+ *        and implement it.
+ *        This influences on dalvikVM's string performance.
+ *        See dalvik/vm/InlineNative.c.
+ */
+/* #define HAVE__MEMCMP16 */
 
 /*
  * type for the third argument to mincore().
@@ -247,66 +278,55 @@
 #define MINCORE_POINTER_TYPE unsigned char *
 
 /*
+ * Do we have the sigaction flag SA_NOCLDWAIT?
+ */
+#define HAVE_SA_NOCLDWAIT
+
+/*
  * The default path separator for the platform
  */
-#define OS_PATH_SEPARATOR '\\'
+#define OS_PATH_SEPARATOR '/'
 
 /*
  * Is the filesystem case sensitive?
  */
-/* #define OS_CASE_SENSITIVE */
+#define OS_CASE_SENSITIVE
 
 /*
  * Define if <sys/socket.h> exists.
- * Cygwin has it, but not MinGW.
  */
-#ifdef USE_MINGW
-/* #define HAVE_SYS_SOCKET_H */
-#else
 #define HAVE_SYS_SOCKET_H 1
-#endif
 
 /*
  * Define if the strlcpy() function exists on the system.
  */
-/* #define HAVE_STRLCPY 1 */
+#define HAVE_STRLCPY 1
 
 /*
- * Define if <winsock2.h> exists.
- * Only MinGW has it.
+ * Define if prctl() exists
  */
-#ifdef USE_MINGW
-#define HAVE_WINSOCK2_H 1
-#else
-/* #define HAVE_WINSOCK2_H */
-#endif
+#define HAVE_PRCTL 1
 
 /*
- * Various definitions missing in MinGW
+ * Define if writev() exists
  */
-#ifdef USE_MINGW
-#define S_IRGRP 0
-#define sleep _sleep
-#endif
+#define HAVE_WRITEV 1
 
 /*
- * Define if writev() exists.
+ * For dalvik/libcore
  */
-/* #define HAVE_WRITEV */
+#define CANT_PASS_VALIST_AS_CHARPTR
 
 /*
- * Define if <stdint.h> exists.
+ * For external/bluez/utils/tools/hciattach.c
+ * TODO : This definition should be somewhere in bionic/libc/kernel/(*).
+ *        Cosider the place and move it there.
  */
-/* #define HAVE_STDINT_H */
+#define N_TTY 0
 
 /*
- * Define if <stdbool.h> exists.
+ * Whether or not _Unwind_Context is defined as a struct.
  */
-/* #define HAVE_STDBOOL_H */
+#define HAVE_UNWIND_CONTEXT_STRUCT
 
-/*
- * Define if <sched.h> exists.
- */
-/* #define HAVE_SCHED_H */
-
-#endif /*_ANDROID_CONFIG_H*/
+#endif /* _ANDROID_CONFIG_H */

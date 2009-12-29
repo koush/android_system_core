@@ -50,7 +50,7 @@ enum {
 
 static int do_cmd(transport_type ttype, char* serial, char *cmd, ...);
 
-void get_my_path(char s[PATH_MAX]);
+void get_my_path(char *s, size_t maxLen);
 int find_sync_dirs(const char *srcarg,
         char **android_srcdir_out, char **data_srcdir_out);
 int install_app(transport_type transport, char* serial, int argc, char** argv);
@@ -151,8 +151,9 @@ void help()
         "  adb status-window            - continuously print device status for a specified device\n"
         "  adb remount                  - remounts the /system partition on the device read-write\n"
         "  adb reboot [bootloader|recovery] - reboots the device, optionally into the bootloader or recovery program\n"
+        "  adb reboot-bootloader        - reboots the device into the bootloader\n"
         "  adb root                     - restarts the adbd daemon with root permissions\n"
-        "  adb usb                      - restarts the adbd daemon listening on USB"
+        "  adb usb                      - restarts the adbd daemon listening on USB\n"
         "  adb tcpip <port>             - restarts the adbd daemon listening on TCP on the specified port"
         "\n"
         "networking:\n"
@@ -673,7 +674,7 @@ static char *find_top(char path_buf[PATH_MAX])
         /* If the CWD isn't under a good-looking top, see if the
          * executable is.
          */
-        get_my_path(dir);
+        get_my_path(dir, PATH_MAX);
         top = find_top_from(dir, path_buf);
     }
     return top;
@@ -929,10 +930,13 @@ top:
     }
 
     if(!strcmp(argv[0], "remount") || !strcmp(argv[0], "reboot")
+            || !strcmp(argv[0], "reboot-bootloader")
             || !strcmp(argv[0], "tcpip") || !strcmp(argv[0], "usb")
             || !strcmp(argv[0], "root")) {
         char command[100];
-        if (argc > 1)
+        if (!strcmp(argv[0], "reboot-bootloader"))
+            snprintf(command, sizeof(command), "reboot:bootloader");
+        else if (argc > 1)
             snprintf(command, sizeof(command), "%s:%s", argv[0], argv[1]);
         else
             snprintf(command, sizeof(command), "%s:", argv[0]);
@@ -990,9 +994,13 @@ top:
     if(!strcmp(argv[0], "forward")) {
         if(argc != 3) return usage();
         if (serial) {
-            snprintf(buf, sizeof buf, "host-serial:%s:forward:%s;%s",serial,argv[1],argv[2]);
+            snprintf(buf, sizeof buf, "host-serial:%s:forward:%s;%s",serial, argv[1], argv[2]);
+        } else if (ttype == kTransportUsb) {
+            snprintf(buf, sizeof buf, "host-usb:forward:%s;%s", argv[1], argv[2]);
+        } else if (ttype == kTransportLocal) {
+            snprintf(buf, sizeof buf, "host-local:forward:%s;%s", argv[1], argv[2]);
         } else {
-            snprintf(buf, sizeof buf, "host:forward:%s;%s",argv[1],argv[2]);
+            snprintf(buf, sizeof buf, "host:forward:%s;%s", argv[1], argv[2]);
         }
         if(adb_command(buf)) {
             fprintf(stderr,"error: %s\n", adb_error());
