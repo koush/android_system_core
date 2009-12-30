@@ -164,9 +164,32 @@ int do_domainname(int nargs, char **args)
     return write_file("/proc/sys/kernel/domainname", args[1]);
 }
 
+/*exec <path> <arg1> <arg2> ... */
+#define MAX_PARAMETERS 64
 int do_exec(int nargs, char **args)
 {
-    return -1;
+    pid_t pid;
+    int status, i, j;
+    char *par[MAX_PARAMETERS];
+    if (nargs > MAX_PARAMETERS)
+    {
+        return -1;
+    }
+    for(i=0, j=1; i<(nargs-1) ;i++,j++)
+    {
+        par[i] = args[j];
+    }
+    par[i] = (char*)0;
+    pid = fork();
+    if (!pid)
+    {
+        execv(par[0],par);
+    }
+    else
+    {
+        while(wait(&status)!=pid);
+    }
+    return 0;
 }
 
 int do_export(int nargs, char **args)
