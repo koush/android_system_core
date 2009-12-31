@@ -168,7 +168,7 @@ on boot
     setprop ro.VISIBLE_APP_MEM 2048
     setprop ro.SECONDARY_SERVER_MEM 4096
     setprop ro.BACKUP_APP_MEM 4096
-    setprop ro.HOME_APP_MEM 2048
+    setprop ro.HOME_APP_MEM 1536
     setprop ro.HIDDEN_APP_MEM 5120
     setprop ro.CONTENT_PROVIDER_MEM 5632
     setprop ro.EMPTY_APP_MEM 6144
@@ -236,6 +236,9 @@ on boot
     setprop net.tcp.buffersize.edge    4093,26280,35040,4096,16384,35040
     setprop net.tcp.buffersize.gprs    4092,8760,11680,4096,8760,11680
 
+    start sysinit
+
+on property:cm.filesystem.ready=1
     class_start default
 
 ## Daemon processes to be run by init.
@@ -362,6 +365,10 @@ service dumpstate /system/bin/dumpstate -s
     disabled
     oneshot
 
+# Execute files in /etc/init.d before booting
+service sysinit /system/bin/logwrapper /system/xbin/busybox run-parts /system/etc/init.d
+    disabled
+    oneshot
 
 # Clean shutdown
 service reboot /system/bin/shutdown -r
