@@ -78,6 +78,11 @@
 #define  HAVE_TERMIO_H 1
 
 /*
+ * Define this if you have <sys/sendfile.h>
+ */
+#define  HAVE_SYS_SENDFILE_H 1
+
+/*
  * Define this if you build against have Microsoft C runtime (MSVCRT.DLL)
  */
 /* #define HAVE_MS_C_RUNTIME */
@@ -292,5 +297,20 @@
  * Whether or not _Unwind_Context is defined as a struct.
  */
 #define HAVE_UNWIND_CONTEXT_STRUCT
+
+/*
+ * Define if <stdint.h> exists.
+ */
+#define HAVE_STDINT_H 1
+
+/*
+ * Define if <stdbool.h> exists.
+ */
+#define HAVE_STDBOOL_H 1
+
+/*
+ * Define if <sched.h> exists.
+ */
+#define HAVE_SCHED_H 1
 
 #endif /* _ANDROID_CONFIG_H */

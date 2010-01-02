@@ -101,6 +101,13 @@
 #endif
 
 /*
+ * Define this if you have <sys/sendfile.h>
+ */
+#ifdef __CYGWIN__
+#  define  HAVE_SYS_SENDFILE_H 1
+#endif
+
+/*
  * Define this if you build against MSVCRT.DLL
  */
 #ifndef __CYGWIN__
@@ -286,5 +293,20 @@
  * Define if writev() exists.
  */
 /* #define HAVE_WRITEV */
+
+/*
+ * Define if <stdint.h> exists.
+ */
+/* #define HAVE_STDINT_H */
+
+/*
+ * Define if <stdbool.h> exists.
+ */
+/* #define HAVE_STDBOOL_H */
+
+/*
+ * Define if <sched.h> exists.
+ */
+/* #define HAVE_SCHED_H */
 
 #endif /*_ANDROID_CONFIG_H*/

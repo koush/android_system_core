@@ -15,9 +15,7 @@
  */
 
 /*
- * Android config -- "Darwin".  Used for PPC Mac OS X.
- *
- * TODO: split this into "x86" and "ppc" versions
+ * Android config -- "Darwin".  Used for X86 Mac OS X.
  */
 #ifndef _ANDROID_CONFIG_H
 #define _ANDROID_CONFIG_H
@@ -86,6 +84,11 @@
  * Define this if you have <termio.h>
  */
 #define  HAVE_TERMIO_H
+
+/*
+ * Define this if you have <sys/sendfile.h>
+ */
+/* #define  HAVE_SYS_SENDFILE_H 1 */
 
 /*
  * Define this if you build against MSVCRT.DLL
@@ -256,5 +259,20 @@
  * Define if writev() exists
  */
 #define HAVE_WRITEV 1
+
+/*
+ * Define if <stdint.h> exists.
+ */
+#define HAVE_STDINT_H 1
+
+/*
+ * Define if <stdbool.h> exists.
+ */
+#define HAVE_STDBOOL_H 1
+
+/*
+ * Define if <sched.h> exists.
+ */
+#define HAVE_SCHED_H 1
 
 #endif /*_ANDROID_CONFIG_H*/
