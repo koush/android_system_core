@@ -4554,7 +4554,7 @@ class Compiler : public ErrorSink {
 
     bool acceptStringLiteral() {
         if (tok == '"') {
-            pGen->leaR0((int) glo, mkpCharPtr, ET_RVALUE);
+            pGen->leaR0((long) glo, mkpCharPtr, ET_RVALUE);
             // This while loop merges multiple adjacent string constants.
             while (tok == '"') {
                 while (ch != '"' && ch != EOF) {
@@ -4634,13 +4634,13 @@ class Compiler : public ErrorSink {
                 // Align to 4-byte boundary
                 glo = (char*) (((intptr_t) glo + 3) & -4);
                 * (float*) glo = (float) ad;
-                pGen->loadFloat((int) glo, mkpFloat);
+                pGen->loadFloat((long) glo, mkpFloat);
                 glo += 4;
             } else if (t == TOK_NUM_DOUBLE) {
                 // Align to 8-byte boundary
                 glo = (char*) (((intptr_t) glo + 7) & -8);
                 * (double*) glo = ad;
-                pGen->loadFloat((int) glo, mkpDouble);
+                pGen->loadFloat((long) glo, mkpDouble);
                 glo += 8;
             } else if (c == 2) {
                 /* -, +, !, ~ */
@@ -4728,7 +4728,7 @@ class Compiler : public ErrorSink {
                     pGen->leaR0(n, pVal, et);
                 } else {
                     pVI->pForward = (void*) pGen->leaForward(
-                            (int) pVI->pForward, pVal);
+                            (long) pVI->pForward, pVal);
                 }
             }
         }
@@ -5737,7 +5737,7 @@ class Compiler : public ErrorSink {
                     mpCurrentSymbolStack = &mLocals;
                     if (name) {
                         /* patch forward references */
-                        pGen->resolveForward((int) name->pForward);
+                        pGen->resolveForward((long) name->pForward);
                         /* put function address */
                         name->pAddress = (void*) pCodeBuf->getPC();
                     }
