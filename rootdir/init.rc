@@ -350,7 +350,7 @@ service racoon /system/bin/racoon
 
 service mtpd /system/bin/mtpd
     socket mtpd stream 600 system system
-    user vpn
+    # mtpd needs to start as root for openvpn but will setuid later
     group vpn net_admin net_raw
     disabled
     oneshot
