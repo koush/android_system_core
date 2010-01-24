@@ -385,6 +385,10 @@ service tether_on /system/bin/logwrapper /system/bin/sh /system/bin/usb-tether s
     disabled
     oneshot
 
+service tether_off /system/bin/logwrapper /system/bin/sh /system/bin/usb-tether stop
+    disabled
+    oneshot
+
 # Compcache
 service compcache_on /system/bin/logwrapper /system/bin/sh /system/bin/compcache start
     disabled
