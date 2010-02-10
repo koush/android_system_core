@@ -56,7 +56,6 @@
 // Dell's USB Vendor ID
 #define VENDOR_ID_DELL          0x413c
 
-
 /** built-in vendor list */
 int builtInVendorIds[] = {
     VENDOR_ID_GOOGLE,
