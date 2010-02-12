@@ -170,6 +170,7 @@ static struct fs_path_config android_files[] = {
     { 02755, AID_ROOT,      AID_INET,      "system/bin/netcfg" },
     	/* the following four files are INTENTIONALLY set-uid, but they
 	 * are NOT included on user builds. */
+    { 06755, AID_ROOT,      AID_ROOT,      "system/bin/su" },
     { 06755, AID_ROOT,      AID_ROOT,      "system/xbin/su" },
     { 06755, AID_ROOT,      AID_ROOT,      "system/xbin/librank" },
     { 06755, AID_ROOT,      AID_ROOT,      "system/xbin/procrank" },
