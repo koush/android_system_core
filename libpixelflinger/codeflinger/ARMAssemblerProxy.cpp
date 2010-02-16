@@ -195,6 +195,10 @@ void ARMAssemblerProxy::SMLAW(int cc, int y, int Rd, int Rm, int Rs, int Rn) {
     mTarget->SMLAW(cc, y, Rd, Rm, Rs, Rn);
 }
 
+void ARMAssemblerProxy::UXTB16(int cc, int Rd, int Rm, int rotate) {
+    mTarget->UXTB16(cc, Rd, Rm, rotate);
+}
+
 void ARMAssemblerProxy::UBFX(int cc, int Rd, int Rn, int lsb, int width) {
     mTarget->UBFX(cc, Rd, Rn, lsb, width);
 }

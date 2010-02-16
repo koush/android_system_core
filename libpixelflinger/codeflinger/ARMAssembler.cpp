@@ -426,6 +426,16 @@ void ARMAssembler::SMLAW(int cc, int y,
 
 #if 0
 #pragma mark -
+#pragma mark Byte/half word extract and extend (ARMv6+ only)...
+#endif
+
+void ARMAssembler::UXTB16(int cc, int Rd, int Rm, int rotate)
+{
+    *mPC++ = (cc<<28) | 0x6CF0070 | (Rd<<12) | ((rotate >> 3) << 10) | Rm;
+}
+
+#if 0
+#pragma mark -
 #pragma mark Bit manipulation (ARMv7+ only)...
 #endif
 

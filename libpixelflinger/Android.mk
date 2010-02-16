@@ -43,7 +43,7 @@ ifeq ($(TARGET_ARCH),arm)
 ifeq ($(ARCH_ARM_HAVE_NEON),true)
 PIXELFLINGER_SRC_FILES += col32cb16blend_neon.S
 PIXELFLINGER_SRC_FILES += col32cb16blend.S
-PIXELFLINGER_SRC_FILES += t32cb16blend_neon.S
+PIXELFLINGER_SRC_FILES += t32cb16blend_neon.S t32cb16_neon.c.arm
 else
 PIXELFLINGER_SRC_FILES += t32cb16blend.S
 PIXELFLINGER_SRC_FILES += col32cb16blend.S
@@ -96,6 +96,5 @@ ifeq ($(TARGET_ARCH),arm)
 LOCAL_WHOLE_STATIC_LIBRARIES := libpixelflinger_armv6
 endif
 include $(BUILD_STATIC_LIBRARY)
-
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
