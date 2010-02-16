@@ -95,6 +95,7 @@ static void rect_memcpy(context_t* c, size_t yc);
 extern "C" void scanline_t32cb16blend_neon(uint16_t *dst, uint32_t *src, size_t ct);
 extern "C" void scanline_t32cb16blend_arm(uint16_t*, uint32_t*, size_t);
 extern "C" void scanline_t32cb16_arm(uint16_t *dst, uint32_t *src, size_t ct);
+extern "C" void scanline_t32cb16_neon(uint16_t *dst, uint32_t *src, size_t ct);
 extern "C" void scanline_col32cb16blend_neon(uint16_t *dst, uint32_t *col, size_t ct);
 extern "C" void scanline_col32cb16blend_arm(uint16_t *dst, uint32_t col, size_t ct);
 
