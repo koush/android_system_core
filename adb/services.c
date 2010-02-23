@@ -343,8 +343,10 @@ static int create_subprocess(const char *cmd, const char *arg0, const char *arg1
 
 #if ADB_HOST
 #define SHELL_COMMAND "/bin/sh"
+#define ALTERNATE_SHELL_COMMAND ""
 #else
 #define SHELL_COMMAND "/system/bin/sh"
+#define ALTERNATE_SHELL_COMMAND "/sbin/sh"
 #endif
 
 #if !ADB_HOST
@@ -386,10 +388,19 @@ static int create_subproc_thread(const char *name)
     adb_thread_t t;
     int ret_fd;
     pid_t pid;
+    const char* shell_command;
+    struct stat filecheck;
+    if (stat(ALTERNATE_SHELL_COMMAND, &filecheck) == 0) {
+        shell_command = ALTERNATE_SHELL_COMMAND;
+    }
+    else {
+        shell_command = SHELL_COMMAND;
+    }
+    
     if(name) {
-        ret_fd = create_subprocess(SHELL_COMMAND, "-c", name, &pid);
+        ret_fd = create_subprocess(shell_command, "-c", name, &pid);
     } else {
-        ret_fd = create_subprocess(SHELL_COMMAND, "-", 0, &pid);
+        ret_fd = create_subprocess(shell_command, "-", 0, &pid);
     }
     D("create_subprocess() ret_fd=%d pid=%d\n", ret_fd, pid);
 
