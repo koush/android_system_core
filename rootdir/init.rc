@@ -141,6 +141,10 @@ loglevel 3
     chown root root /cache/lost+found
     chmod 0770 /cache/lost+found
 
+    # allow net_raw to have access to /dev/socket directory
+    chown root net_raw /dev/socket
+    chmod 0775 /dev/socket
+
 on boot
 # basic network init
     ifup lo
