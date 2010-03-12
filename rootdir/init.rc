@@ -27,6 +27,7 @@ loglevel 3
     mkdir /cache 0771 system cache
     mkdir /config 0500 root root
     mkdir /sqlite_stmt_journals 01777 root root
+    mkdir /sd-ext 0771 system system
     mount tmpfs tmpfs /sqlite_stmt_journals size=4m
 
     mount rootfs rootfs / ro remount
