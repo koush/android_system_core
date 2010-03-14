@@ -139,6 +139,7 @@ static struct fs_path_config android_dirs[] = {
     { 00755, AID_ROOT,   AID_SHELL,  "system/xbin" },
     { 00755, AID_ROOT,   AID_ROOT,   "system/etc/ppp" },
     { 00777, AID_ROOT,   AID_ROOT,   "sdcard" },
+    { 00771, AID_SYSTEM, AID_SYSTEM, "sd-ext" },
     { 00755, AID_ROOT,   AID_ROOT,   0 },
 };
 
