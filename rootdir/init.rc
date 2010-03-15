@@ -12,6 +12,7 @@ loglevel 3
     export ANDROID_ROOT /system
     export ANDROID_ASSETS /system/app
     export ANDROID_DATA /data
+    export SD_EXT_DIRECTORY /sd-ext
     export EXTERNAL_STORAGE /sdcard
     export BOOTCLASSPATH /system/framework/core.jar:/system/framework/ext.jar:/system/framework/framework.jar:/system/framework/android.policy.jar:/system/framework/services.jar
     export TERMINFO /system/etc/terminfo
