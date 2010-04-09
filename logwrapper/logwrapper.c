@@ -88,7 +88,7 @@ void parent(const char *tag, int seg_fault_on_exit, int parent_read) {
     }
     status = 0xAAAA;
     if (wait(&status) != -1) {  // Wait for child
-        if (WIFEXITED(status))
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
             LOG(LOG_INFO, "logwrapper", "%s terminated by exit(%d)", tag,
                     WEXITSTATUS(status));
         else if (WIFSIGNALED(status))
