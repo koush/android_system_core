@@ -5,13 +5,14 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <limits.h>
+#include <libgen.h>
 
 #include "mincrypt/sha.h"
 #include "bootimg.h"
 
 typedef unsigned char byte;
 
-int read_padding(FILE* f, unsigned itemsize)
+void read_padding(FILE* f, unsigned itemsize)
 {
     byte buf[2048];
     int pagesize = 2048;
@@ -19,16 +20,19 @@ int read_padding(FILE* f, unsigned itemsize)
     unsigned count;
 
     if((itemsize & pagemask) == 0) {
-        return 0;
+        return;
     }
 
     count = pagesize - (itemsize & pagemask);
 
-    if(fread(buf, count, 1, f)) {
-        return -1;
-    } else {
-        return 0;
-    }
+    fread(buf, count, 1, f);
+}
+
+void write_string_to_file(char* file, char* string)
+{
+    FILE* f = fopen(file, "w");
+    fwrite(string, strlen(string), 1, f);
+    fclose(f);
 }
 
 
@@ -42,11 +46,13 @@ int main(int argc, char** argv)
         return 0;
     }
     
+    char tmp[PATH_MAX];
     char* directory = "./";
     if (argc == 3)
     {
         directory = argv[2];
     }
+    //printf("%s\n", directory);
     
     int total_read = 0;
     FILE* f = fopen(argv[1], "rb");
@@ -57,14 +63,25 @@ int main(int argc, char** argv)
     printf("BOARD_KERNEL_CMDLINE %s\n", header.cmdline);
     printf("BOARD_KERNEL_BASE %x\n", header.kernel_addr - 0x00008000);
     
+    //printf("cmdline...\n");
+    sprintf(tmp, "%s/%s", directory, basename(argv[1]));
+    strcat(tmp, "-cmdline");
+    write_string_to_file(tmp, header.cmdline);
+    
+    //printf("base...\n");
+    sprintf(tmp, "%s/%s", directory, basename(argv[1]));
+    strcat(tmp, "-base");
+    char basetmp[200];
+    sprintf(basetmp, "%x", header.kernel_addr - 0x00008000);
+    write_string_to_file(tmp, basetmp);
+    
     total_read += sizeof(header);
     //printf("total read: %d\n", total_read);
     read_padding(f, sizeof(header));
 
-    char* kernel_file[PATH_MAX];
-    sprintf(kernel_file, "%s/%s", directory, basename(argv[1]));
-    strcat(kernel_file, "-zImage");
-    FILE *k = fopen(kernel_file, "wb");
+    sprintf(tmp, "%s/%s", directory, basename(argv[1]));
+    strcat(tmp, "-zImage");
+    FILE *k = fopen(tmp, "wb");
     byte* kernel = (byte*)malloc(header.kernel_size);
     //printf("Reading kernel...\n");
     fread(kernel, header.kernel_size, 1, f);
@@ -75,10 +92,9 @@ int main(int argc, char** argv)
     //printf("total read: %d\n", header.kernel_size);
     read_padding(f, header.kernel_size);
 
-    char* ramdisk_file[PATH_MAX];
-    sprintf(ramdisk_file, "%s/%s", directory, basename(argv[1]));
-    strcat(ramdisk_file, "-ramdisk.img");
-    FILE *r = fopen(ramdisk_file, "wb");
+    sprintf(tmp, "%s/%s", directory, basename(argv[1]));
+    strcat(tmp, "-ramdisk.gz");
+    FILE *r = fopen(tmp, "wb");
     byte* ramdisk = (byte*)malloc(header.ramdisk_size);
     //printf("Reading ramdisk...\n");
     fread(ramdisk, header.ramdisk_size, 1, f);
