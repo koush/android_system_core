@@ -405,7 +405,8 @@ static void show_help(const char *cmd)
                     "  -b <buffer>     Request alternate ring buffer, 'main', 'system', 'radio'\n"
                     "                  or 'events'. Multiple -b parameters are allowed and the\n"
                     "                  results are interleaved. The default is -b main -b system.\n"
-                    "  -B              output the log in binary");
+                    "  -B              output the log in binary\n"
+                    "  -C              colored output");
 
 
     fprintf(stderr,"\nfilterspecs are a series of \n"
@@ -447,6 +448,11 @@ static int setLogFormat(const char * formatString)
     return 0;
 }
 
+static void setColoredOutput()
+{
+    android_log_setColoredOutput(g_logformat);
+}
+
 extern "C" void logprint_run_tests(void);
 
 int main(int argc, char **argv)
@@ -476,7 +482,7 @@ int main(int argc, char **argv)
     for (;;) {
         int ret;
 
-        ret = getopt(argc, argv, "cdt:gsQf:r::n:v:b:B");
+        ret = getopt(argc, argv, "cdt:gsQf:r::n:v:b:BC");
 
         if (ret < 0) {
             break;
@@ -504,6 +510,10 @@ int main(int argc, char **argv)
 
             case 'g':
                 getLogSize = 1;
+            break;
+
+            case 'C':
+                setColoredOutput();
             break;
 
             case 'b': {

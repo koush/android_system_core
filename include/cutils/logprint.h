@@ -38,6 +38,11 @@ typedef enum {
     FORMAT_LONG,
 } AndroidLogPrintFormat;
 
+typedef enum {
+    OUTPUT_COLOR_ON = 0,
+    OUTPUT_COLOR_OFF,
+} AndroidLogColoredOutput;
+
 typedef struct AndroidLogFormat_t AndroidLogFormat;
 
 typedef struct AndroidLogEntry_t {
@@ -57,6 +62,8 @@ void android_log_format_free(AndroidLogFormat *p_format);
 
 void android_log_setPrintFormat(AndroidLogFormat *p_format, 
         AndroidLogPrintFormat format);
+
+void android_log_setColoredOutput(AndroidLogFormat *p_format);
 
 /**
  * Returns FORMAT_OFF on invalid string
