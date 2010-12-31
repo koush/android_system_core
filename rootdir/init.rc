@@ -274,6 +274,12 @@ on boot
 # Set this property so surfaceflinger is not started by system_init
     setprop system_init.startsurfaceflinger 0
 
+# Include extra init file
+    import /system/etc/init.local.rc
+
+# Run sysinit
+    exec /system/bin/sysinit
+
     class_start core
     class_start main
 
