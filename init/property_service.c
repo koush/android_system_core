@@ -85,6 +85,15 @@ struct {
     { "persist.sys.",     AID_SYSTEM,   0 },
     { "persist.service.", AID_SYSTEM,   0 },
     { "persist.security.", AID_SYSTEM,   0 },
+    { "net.pdp0",         AID_RADIO,    AID_RADIO },
+    { "net.pdp1",         AID_RADIO,    AID_RADIO },
+    { "net.pdp2",         AID_RADIO,    AID_RADIO },
+    { "net.pdp3",         AID_RADIO,    AID_RADIO },
+    { "net.pdp4",         AID_RADIO,    AID_RADIO },
+    { "net.vsnet0",       AID_RADIO,    AID_RADIO },
+    { "net.vsnet1",       AID_RADIO,    AID_RADIO },
+    { "net.vsnet2",       AID_RADIO,    AID_RADIO },
+    { "net.vsnet3",       AID_RADIO,    AID_RADIO },
     { NULL, 0, 0 }
 };
 
@@ -99,6 +108,10 @@ struct {
 } control_perms[] = {
     { "dumpstate",AID_SHELL, AID_LOG },
     { "ril-daemon",AID_RADIO, AID_RADIO },
+    { "rawip_vsnet1",AID_RADIO, AID_RADIO },
+    { "rawip_vsnet2",AID_RADIO, AID_RADIO },
+    { "rawip_vsnet3",AID_RADIO, AID_RADIO },
+    { "rawip_vsnet4",AID_RADIO, AID_RADIO },
      {NULL, 0, 0 }
 };
 
