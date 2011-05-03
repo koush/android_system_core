@@ -121,6 +121,10 @@ int android_reboot(int cmd, int flags, char *arg)
             break;
 
         case ANDROID_RB_RESTART2:
+#ifdef RECOVERY_PRE_COMMAND
+            if (!strncmp((char *)arg,"recovery",8))
+                system( RECOVERY_PRE_COMMAND );
+#endif
             ret = __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2,
                            LINUX_REBOOT_CMD_RESTART2, arg);
             break;
