@@ -818,6 +818,8 @@ ifc_configure(const char *ifname,
     property_set(dns_prop_name, dns1 ? ipaddr_to_string(dns1) : "");
     snprintf(dns_prop_name, sizeof(dns_prop_name), "net.%s.dns2", ifname);
     property_set(dns_prop_name, dns2 ? ipaddr_to_string(dns2) : "");
+    snprintf(dns_prop_name, sizeof(dns_prop_name), "net.%s.gw", ifname);
+    property_set(dns_prop_name, gateway ? ipaddr_to_string(gateway) : "");
 
     return 0;
 }
