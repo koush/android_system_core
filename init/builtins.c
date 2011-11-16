@@ -23,6 +23,7 @@
 #include <linux/kd.h>
 #include <errno.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <linux/if.h>
 #include <arpa/inet.h>
@@ -174,9 +175,42 @@ int do_domainname(int nargs, char **args)
     return write_file("/proc/sys/kernel/domainname", args[1]);
 }
 
+/*exec <path> <arg1> <arg2> ... */
+#define MAX_PARAMETERS 64
 int do_exec(int nargs, char **args)
 {
-    return -1;
+    pid_t pid;
+    int status, i, j;
+    char *par[MAX_PARAMETERS];
+    if (nargs > MAX_PARAMETERS)
+    {
+        return -1;
+    }
+    for(i=0, j=1; i<(nargs-1) ;i++,j++)
+    {
+        par[i] = args[j];
+    }
+    par[i] = (char*)0;
+    pid = fork();
+    if (!pid)
+    {
+        char tmp[32];
+        int fd, sz;
+        get_property_workspace(&fd, &sz);
+        sprintf(tmp, "%d,%d", dup(fd), sz);
+        setenv("ANDROID_PROPERTY_WORKSPACE", tmp, 1);
+        execve(par[0],par,environ);
+        exit(0);
+    }
+    else
+    {
+        waitpid(pid, &status, 0);
+        if (WEXITSTATUS(status) != 0) {
+            ERROR("exec: pid %1d exited with return code %d: %s", (int)pid, WEXITSTATUS(status), strerror(status));
+        }
+
+    }
+    return 0;
 }
 
 int do_export(int nargs, char **args)
