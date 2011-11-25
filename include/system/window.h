@@ -22,6 +22,10 @@
 #include <system/graphics.h>
 #include <cutils/native_handle.h>
 
+#ifdef __cplusplus
+#include <string.h>
+#endif
+
 __BEGIN_DECLS
 
 /*****************************************************************************/
