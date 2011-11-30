@@ -3,6 +3,10 @@
     .global crash
     .type crash, %function
 crash:
+#if defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_6__)
+    //VFPv3 was the first to have the fconstd instruction.
+#else //// defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_6__)
+
     fconstd   d0, #0
     fconstd   d1, #1
     fconstd   d2, #2
@@ -37,6 +41,7 @@ crash:
     fconstd   d30, #30
     fconstd   d31, #31
 #endif
+#endif // defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_6__)
     mov       r0, #0
     str       r0, [r0]
     bx        lr
