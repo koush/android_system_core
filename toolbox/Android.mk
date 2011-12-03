@@ -16,7 +16,6 @@ TOOLS := \
 	rm \
 	mkdir \
 	rmdir \
-	reboot \
 	getevent \
 	sendevent \
 	date \
@@ -65,6 +64,14 @@ LOCAL_SRC_FILES:= \
 	dynarray.c \
 	toolbox.c \
 	$(patsubst %,%.c,$(TOOLS))
+
+TOOLS += reboot
+
+ifeq ($(BOARD_USES_BOOTMENU),true)
+	LOCAL_SRC_FILES += ../../../external/bootmenu/libreboot/reboot.c
+else
+	LOCAL_SRC_FILES += reboot.c
+endif
 
 LOCAL_SHARED_LIBRARIES := libcutils libc libusbhost
 
