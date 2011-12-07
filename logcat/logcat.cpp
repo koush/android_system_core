@@ -669,14 +669,14 @@ int main(int argc, char **argv)
     }
 
     if (!devices) {
-        devices = new log_device_t(strdup("/dev/"LOGGER_LOG_MAIN), false, 'm');
+        devices = new log_device_t(strdup("/dev/" LOGGER_LOG_MAIN), false, 'm');
         android::g_devCount = 1;
         int accessmode =
                   (mode & O_RDONLY) ? R_OK : 0
                 | (mode & O_WRONLY) ? W_OK : 0;
         // only add this if it's available
-        if (0 == access("/dev/"LOGGER_LOG_SYSTEM, accessmode)) {
-            devices->next = new log_device_t(strdup("/dev/"LOGGER_LOG_SYSTEM), false, 's');
+        if (0 == access("/dev/" LOGGER_LOG_SYSTEM, accessmode)) {
+            devices->next = new log_device_t(strdup("/dev/" LOGGER_LOG_SYSTEM), false, 's');
             android::g_devCount++;
         }
     }

@@ -36,19 +36,22 @@
  */
 int socket_loopback_client(int port, int type)
 {
-    struct sockaddr_in addr;
+    union {
+        struct sockaddr_in in;
+        struct sockaddr generic;
+    } addr;
     socklen_t alen;
     int s;
 
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    memset(&addr.in, 0, sizeof(addr.in));
+    addr.in.sin_family = AF_INET;
+    addr.in.sin_port = htons(port);
+    addr.in.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
     s = socket(AF_INET, type, 0);
     if(s < 0) return -1;
 
-    if(connect(s, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+    if(connect(s, &addr.generic, sizeof(addr.in)) < 0) {
         close(s);
         return -1;
     }

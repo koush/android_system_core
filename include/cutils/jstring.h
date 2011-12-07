@@ -24,7 +24,9 @@
 extern "C" {
 #endif
 
+#if __cplusplus < 201103L && !defined(__GXX_EXPERIMENTAL_CXX0X__)
 typedef uint16_t char16_t;
+#endif
 
 extern char * strndup16to8 (const char16_t* s, size_t n);
 extern size_t strnlen16to8 (const char16_t* s, size_t n);

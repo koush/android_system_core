@@ -42,20 +42,23 @@ int fatal();
 int open_raw_socket(const char *ifname, uint8_t *hwaddr, int if_index)
 {
     int s, flag;
-    struct sockaddr_ll bindaddr;
+    union {
+        struct sockaddr_ll ll;
+        struct sockaddr generic;
+    } bindaddr;
 
     if((s = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_IP))) < 0) {
         return fatal("socket(PF_PACKET)");
     }
 
     memset(&bindaddr, 0, sizeof(bindaddr));
-    bindaddr.sll_family = AF_PACKET;
-    bindaddr.sll_protocol = htons(ETH_P_IP);
-    bindaddr.sll_halen = ETH_ALEN;
-    memcpy(bindaddr.sll_addr, hwaddr, ETH_ALEN);
-    bindaddr.sll_ifindex = if_index;
+    bindaddr.ll.sll_family = AF_PACKET;
+    bindaddr.ll.sll_protocol = htons(ETH_P_IP);
+    bindaddr.ll.sll_halen = ETH_ALEN;
+    memcpy(bindaddr.ll.sll_addr, hwaddr, ETH_ALEN);
+    bindaddr.ll.sll_ifindex = if_index;
 
-    if (bind(s, (struct sockaddr *)&bindaddr, sizeof(bindaddr)) < 0) {
+    if (bind(s, &bindaddr.generic, sizeof(bindaddr.ll)) < 0) {
         return fatal("Cannot bind raw socket to interface");
     }
 
