@@ -88,6 +88,8 @@ static time_t process_needs_restart;
 
 static const char *ENV[32];
 
+static unsigned emmc_boot = 0;
+
 /* add_environment - add "key=value" to the current environment */
 int add_environment(const char *key, const char *val)
 {
@@ -447,8 +449,12 @@ static void import_kernel_nv(char *name, int in_qemu)
             strlcpy(bootloader, value, sizeof(bootloader));
         } else if (!strcmp(name,"androidboot.hardware")) {
             strlcpy(hardware, value, sizeof(hardware));
+        } else if (!strcmp(name,"androidboot.emmc")) {
+            if (!strcmp(value,"true")) {
+                emmc_boot = 1;
+            }
         }
-    } else {
+     } else {
         /* in the emulator, export any kernel option with the
          * ro.kernel. prefix */
         char  buff[32];
@@ -599,6 +605,7 @@ static int set_init_properties_action(int nargs, char **args)
     property_set("ro.hardware", hardware);
     snprintf(tmp, PROP_VALUE_MAX, "%d", revision);
     property_set("ro.revision", tmp);
+    property_set("ro.emmc",emmc_boot ? "1" : "0");
     return 0;
 }
 
@@ -713,6 +720,12 @@ int main(int argc, char **argv)
     snprintf(tmp, sizeof(tmp), "/init.%s.rc", hardware);
     init_parse_config_file(tmp);
 
+    /* Check for a target specific initialisation file and read if present */
+    if (access("/init.target.rc", R_OK) == 0) {
+        INFO("Reading target specific config file");
+            init_parse_config_file("/init.target.rc");
+    }
+
     action_for_each_trigger("early-init", action_add_queue_tail);
 
     queue_builtin_action(wait_for_coldboot_done_action, "wait_for_coldboot_done");
@@ -727,7 +740,11 @@ int main(int argc, char **argv)
     /* skip mounting filesystems in charger mode */
     if (strcmp(bootmode, "charger") != 0) {
         action_for_each_trigger("early-fs", action_add_queue_tail);
+    if(emmc_boot) {
+        action_for_each_trigger("emmc-fs", action_add_queue_tail);
+    } else {
         action_for_each_trigger("fs", action_add_queue_tail);
+    }
         action_for_each_trigger("post-fs", action_add_queue_tail);
         action_for_each_trigger("post-fs-data", action_add_queue_tail);
     }
