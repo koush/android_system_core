@@ -31,6 +31,7 @@
 
 #include <cutils/sockets.h>
 #include <cutils/logd.h>
+#include <cutils/logger.h>
 #include <cutils/properties.h>
 
 #include <linux/input.h>
@@ -41,6 +42,9 @@
 #include "utility.h"
 
 #define ANDROID_LOG_INFO 4
+
+void _LOG(int tfd, bool in_tombstone_only, const char *fmt, ...)
+    __attribute__ ((format(printf, 3, 4)));
 
 /* Log information onto the tombstone */
 void _LOG(int tfd, bool in_tombstone_only, const char *fmt, ...)
@@ -59,6 +63,7 @@ void _LOG(int tfd, bool in_tombstone_only, const char *fmt, ...)
 
     if (!in_tombstone_only)
         __android_log_vprint(ANDROID_LOG_INFO, "DEBUG", fmt, ap);
+    va_end(ap);
 }
 
 // 6f000000-6f01e000 rwxp 00000000 00:0c 16389419   /system/lib/libcomposer.so
@@ -70,14 +75,17 @@ mapinfo *parse_maps_line(char *line)
     mapinfo *mi;
     int len = strlen(line);
 
-    if(len < 1) return 0;
+    if (len < 1) return 0;      /* not expected */
     line[--len] = 0;
 
-    if(len < 50) return 0;
-    if(line[20] != 'x') return 0;
+    if (len < 50) {
+        mi = malloc(sizeof(mapinfo) + 1);
+    } else {
+        mi = malloc(sizeof(mapinfo) + (len - 47));
+    }
+    if (mi == 0) return 0;
 
-    mi = malloc(sizeof(mapinfo) + (len - 47));
-    if(mi == 0) return 0;
+    mi->isExecutable = (line[20] == 'x');
 
     mi->start = strtoul(line, 0, 16);
     mi->end = strtoul(line + 9, 0, 16);
@@ -87,7 +95,11 @@ mapinfo *parse_maps_line(char *line)
     mi->exidx_start = mi->exidx_end = 0;
     mi->symbols = 0;
     mi->next = 0;
-    strcpy(mi->name, line + 49);
+    if (len < 50) {
+        mi->name[0] = '\0';
+    } else {
+        strcpy(mi->name, line + 49);
+    }
 
     return mi;
 }
@@ -165,11 +177,14 @@ void dump_fault_addr(int tfd, int pid, int sig)
     memset(&si, 0, sizeof(si));
     if(ptrace(PTRACE_GETSIGINFO, pid, 0, &si)){
         _LOG(tfd, false, "cannot get siginfo: %s\n", strerror(errno));
-    } else {
+    } else if (signal_has_address(sig)) {
         _LOG(tfd, false, "signal %d (%s), code %d (%s), fault addr %08x\n",
              sig, get_signame(sig),
              si.si_code, get_sigcode(sig, si.si_code),
-             si.si_addr);
+             (uintptr_t) si.si_addr);
+    } else {
+        _LOG(tfd, false, "signal %d (%s), code %d (%s), fault addr --------\n",
+             sig, get_signame(sig), si.si_code, get_sigcode(sig, si.si_code));
     }
 }
 
@@ -199,6 +214,9 @@ static void parse_elf_info(mapinfo *milist, pid_t pid)
 {
     mapinfo *mi;
     for (mi = milist; mi != NULL; mi = mi->next) {
+        if (!mi->isExecutable)
+            continue;
+
         Elf32_Ehdr ehdr;
 
         memset(&ehdr, 0, sizeof(Elf32_Ehdr));
@@ -394,10 +412,159 @@ static bool dump_sibling_thread_report(int tfd, unsigned pid, unsigned tid)
             continue;
 
         dump_crash_report(tfd, pid, new_tid, false);
-        need_cleanup |= ptrace(PTRACE_DETACH, new_tid, 0, 0);
+
+        if (ptrace(PTRACE_DETACH, new_tid, 0, 0) != 0) {
+            XLOG("detach of tid %d failed: %s\n", new_tid, strerror(errno));
+            need_cleanup = 1;
+        }
     }
     closedir(d);
+
     return need_cleanup != 0;
+}
+
+/*
+ * Reads the contents of the specified log device, filters out the entries
+ * that don't match the specified pid, and writes them to the tombstone file.
+ *
+ * If "tailOnly" is set, we only print the last few lines.
+ */
+static void dump_log_file(int tfd, unsigned pid, const char* filename,
+    bool tailOnly)
+{
+    bool first = true;
+
+    /* circular buffer, for "tailOnly" mode */
+    const int kShortLogMaxLines = 5;
+    const int kShortLogLineLen = 256;
+    char shortLog[kShortLogMaxLines][kShortLogLineLen];
+    int shortLogCount = 0;
+    int shortLogNext = 0;
+
+    int logfd = open(filename, O_RDONLY | O_NONBLOCK);
+    if (logfd < 0) {
+        XLOG("Unable to open %s: %s\n", filename, strerror(errno));
+        return;
+    }
+
+    union {
+        unsigned char buf[LOGGER_ENTRY_MAX_LEN + 1];
+        struct logger_entry entry;
+    } log_entry;
+
+    while (true) {
+        ssize_t actual = read(logfd, log_entry.buf, LOGGER_ENTRY_MAX_LEN);
+        if (actual < 0) {
+            if (errno == EINTR) {
+                /* interrupted by signal, retry */
+                continue;
+            } else if (errno == EAGAIN) {
+                /* non-blocking EOF; we're done */
+                break;
+            } else {
+                _LOG(tfd, true, "Error while reading log: %s\n",
+                    strerror(errno));
+                break;
+            }
+        } else if (actual == 0) {
+            _LOG(tfd, true, "Got zero bytes while reading log: %s\n",
+                strerror(errno));
+            break;
+        }
+
+        /*
+         * NOTE: if you XLOG something here, this will spin forever,
+         * because you will be writing as fast as you're reading.  Any
+         * high-frequency debug diagnostics should just be written to
+         * the tombstone file.
+         */
+
+        struct logger_entry* entry = &log_entry.entry;
+
+        if (entry->pid != (int32_t) pid) {
+            /* wrong pid, ignore */
+            continue;
+        }
+
+        if (first) {
+            _LOG(tfd, true, "--------- %slog %s\n",
+                tailOnly ? "tail end of " : "", filename);
+            first = false;
+        }
+
+        /*
+         * Msg format is: <priority:1><tag:N>\0<message:N>\0
+         *
+         * We want to display it in the same format as "logcat -v threadtime"
+         * (although in this case the pid is redundant).
+         *
+         * TODO: scan for line breaks ('\n') and display each text line
+         * on a separate line, prefixed with the header, like logcat does.
+         */
+        static const char* kPrioChars = "!.VDIWEFS";
+        unsigned char prio = entry->msg[0];
+        char* tag = entry->msg + 1;
+        char* msg = tag + strlen(tag) + 1;
+
+        /* consume any trailing newlines */
+        char* eatnl = msg + strlen(msg) - 1;
+        while (eatnl >= msg && *eatnl == '\n') {
+            *eatnl-- = '\0';
+        }
+
+        char prioChar = (prio < strlen(kPrioChars) ? kPrioChars[prio] : '?');
+
+        char timeBuf[32];
+        time_t sec = (time_t) entry->sec;
+        struct tm tmBuf;
+        struct tm* ptm;
+        ptm = localtime_r(&sec, &tmBuf);
+        strftime(timeBuf, sizeof(timeBuf), "%m-%d %H:%M:%S", ptm);
+
+        if (tailOnly) {
+            snprintf(shortLog[shortLogNext], kShortLogLineLen,
+                "%s.%03d %5d %5d %c %-8s: %s",
+                timeBuf, entry->nsec / 1000000, entry->pid, entry->tid,
+                prioChar, tag, msg);
+            shortLogNext = (shortLogNext + 1) % kShortLogMaxLines;
+            shortLogCount++;
+        } else {
+            _LOG(tfd, true, "%s.%03d %5d %5d %c %-8s: %s\n",
+                timeBuf, entry->nsec / 1000000, entry->pid, entry->tid,
+                prioChar, tag, msg);
+        }
+    }
+
+    if (tailOnly) {
+        int i;
+
+        /*
+         * If we filled the buffer, we want to start at "next", which has
+         * the oldest entry.  If we didn't, we want to start at zero.
+         */
+        if (shortLogCount < kShortLogMaxLines) {
+            shortLogNext = 0;
+        } else {
+            shortLogCount = kShortLogMaxLines;  /* cap at window size */
+        }
+
+        for (i = 0; i < shortLogCount; i++) {
+            _LOG(tfd, true, "%s\n", shortLog[shortLogNext]);
+            shortLogNext = (shortLogNext + 1) % kShortLogMaxLines;
+        }
+    }
+
+    close(logfd);
+}
+
+/*
+ * Dumps the logs generated by the specified pid to the tombstone, from both
+ * "system" and "main" log devices.  Ideally we'd interleave the output.
+ */
+static void dump_logs(int tfd, unsigned pid, bool tailOnly)
+{
+    dump_log_file(tfd, pid, "/dev/log/system", tailOnly);
+    dump_log_file(tfd, pid, "/dev/log/main", tailOnly);
 }
 
 /* Return true if some thread is not detached cleanly */
@@ -406,6 +573,11 @@ static bool engrave_tombstone(unsigned pid, unsigned tid, int debug_uid,
 {
     int fd;
     bool need_cleanup = false;
+
+    /* don't copy log messages to tombstone unless this is a dev device */
+    char value[PROPERTY_VALUE_MAX];
+    property_get("ro.debuggable", value, "0");
+    bool wantLogs = (value[0] == '1');
 
     mkdir(TOMBSTONE_DIR, 0755);
     chown(TOMBSTONE_DIR, AID_SYSTEM, AID_SYSTEM);
@@ -416,12 +588,21 @@ static bool engrave_tombstone(unsigned pid, unsigned tid, int debug_uid,
 
     dump_crash_banner(fd, pid, tid, signal);
     dump_crash_report(fd, pid, tid, true);
+
+    if (wantLogs) {
+        dump_logs(fd, pid, true);
+    }
+
     /*
      * If the user has requested to attach gdb, don't collect the per-thread
      * information as it increases the chance to lose track of the process.
      */
     if ((signed)pid > debug_uid) {
         need_cleanup = dump_sibling_thread_report(fd, pid, tid);
+    }
+
+    if (wantLogs) {
+        dump_logs(fd, pid, false);
     }
 
     close(fd);
@@ -587,9 +768,11 @@ static void handle_crashing_process(int fd)
      * is blocked in a read() call. This gives us the time to PTRACE_ATTACH
      * to it before it has a chance to really fault.
      *
-     * After the attach, the thread is stopped, and we write to the file
-     * descriptor to ensure that it will run as soon as we call PTRACE_CONT
-     * below. See details in bionic/libc/linker/debugger.c, in function
+     * The PTRACE_ATTACH sends a SIGSTOP to the target process, but it
+     * won't necessarily have stopped by the time ptrace() returns.  (We
+     * currently assume it does.)  We write to the file descriptor to
+     * ensure that it can run as soon as we call PTRACE_CONT below.
+     * See details in bionic/libc/linker/debugger.c, in function
      * debugger_signal_handler().
      */
     tid_attach_status = ptrace(PTRACE_ATTACH, tid, 0, 0);
@@ -697,7 +880,12 @@ done:
         wait_for_user_action(tid, &cr);
     }
 
-    /* resume stopped process (so it can crash in peace) */
+    /*
+     * Resume stopped process (so it can crash in peace).  If we didn't
+     * successfully detach, we're still the parent, and the actual parent
+     * won't receive a death notification via wait(2).  At this point
+     * there's not much we can do about that.
+     */
     kill(cr.pid, SIGCONT);
 
     if (need_cleanup) {
