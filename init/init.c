@@ -665,6 +665,25 @@ static int bootchart_init_action(int nargs, char **args)
 }
 #endif
 
+static int charging_mode_booting(void)
+{
+#ifndef BOARD_CHARGING_MODE_BOOTING_LPM
+	return 0;
+#else
+	int f;
+	char cmb;
+	f = open(BOARD_CHARGING_MODE_BOOTING_LPM, O_RDONLY);
+	if (f < 0)
+		return 0;
+
+	if (1 != read(f, (void *)&cmb,1))
+		return 0;
+
+	close(f);
+	return ('1' == cmb);
+#endif
+}
+
 int main(int argc, char **argv)
 {
     int fd_count = 0;
@@ -710,15 +729,22 @@ int main(int argc, char **argv)
     klog_init();
 
     INFO("reading config file\n");
-    init_parse_config_file("/init.rc");
+
+    if (!charging_mode_booting())
+       init_parse_config_file("/init.rc");
+    else
+       init_parse_config_file("/lpm.rc");
 
     /* pull the kernel commandline and ramdisk properties file in */
     import_kernel_cmdline(0, import_kernel_nv);
     /* don't expose the raw commandline to nonpriv processes */
     chmod("/proc/cmdline", 0440);
-    get_hardware_name(hardware, &revision);
-    snprintf(tmp, sizeof(tmp), "/init.%s.rc", hardware);
-    init_parse_config_file(tmp);
+
+    if (!charging_mode_booting()) {
+         get_hardware_name(hardware, &revision);
+         snprintf(tmp, sizeof(tmp), "/init.%s.rc", hardware);
+         init_parse_config_file(tmp);
+    }
 
     /* Check for a target specific initialisation file and read if present */
     if (access("/init.target.rc", R_OK) == 0) {

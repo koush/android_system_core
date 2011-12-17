@@ -22,6 +22,14 @@ LOCAL_SRC_FILES += bootchart.c
 LOCAL_CFLAGS    += -DBOOTCHART=1
 endif
 
+SYSTEM_CORE_INIT_DEFINES := BOARD_CHARGING_MODE_BOOTING_LPM
+
+$(foreach system_core_init_define,$(SYSTEM_CORE_INIT_DEFINES), \
+  $(if $($(system_core_init_define)), \
+    $(eval LOCAL_CFLAGS += -D$(system_core_init_define)=\"$($(system_core_init_define))\") \
+  ) \
+  )
+
 LOCAL_MODULE:= init
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
