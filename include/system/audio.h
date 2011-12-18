@@ -46,8 +46,9 @@ typedef enum {
     AUDIO_STREAM_ENFORCED_AUDIBLE = 7, /* Sounds that cannot be muted by user and must be routed to speaker */
     AUDIO_STREAM_DTMF             = 8,
     AUDIO_STREAM_TTS              = 9,
+#ifdef QCOM_HARDWARE
     AUDIO_STREAM_FM               = 10,
-
+#endif
     AUDIO_STREAM_CNT,
     AUDIO_STREAM_MAX              = AUDIO_STREAM_CNT - 1,
 } audio_stream_type_t;
@@ -64,9 +65,10 @@ typedef enum {
     AUDIO_SOURCE_CAMCORDER           = 5,
     AUDIO_SOURCE_VOICE_RECOGNITION   = 6,
     AUDIO_SOURCE_VOICE_COMMUNICATION = 7,
+#ifdef QCOM_HARDWARE
     AUDIO_SOURCE_FM_RX               = 8,
     AUDIO_SOURCE_FM_RX_A2DP          = 9,
-
+#endif
     AUDIO_SOURCE_CNT,
     AUDIO_SOURCE_MAX                 = AUDIO_SOURCE_CNT - 1,
 } audio_source_t;
@@ -141,8 +143,10 @@ typedef enum {
     AUDIO_FORMAT_HE_AAC_V1           = 0x05000000UL,
     AUDIO_FORMAT_HE_AAC_V2           = 0x06000000UL,
     AUDIO_FORMAT_VORBIS              = 0x07000000UL,
+#ifdef QCOM_HARDWARE
     AUDIO_FORMAT_QCELP               = 0x08000000UL,
     AUDIO_FORMAT_EVRC                = 0x09000000UL,
+#endif
     AUDIO_FORMAT_MAIN_MASK           = 0xFF000000UL,
     AUDIO_FORMAT_SUB_MASK            = 0x00FFFFFFUL,
 
@@ -294,11 +298,15 @@ typedef enum {
     AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET         = 0x800,
     AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET         = 0x1000,
     AUDIO_DEVICE_OUT_FM                        = 0x2000,
+#ifdef QCOM_HARDWARE
     AUDIO_DEVICE_OUT_ANC_HEADSET               = 0x4000,
     AUDIO_DEVICE_OUT_ANC_HEADPHONE             = 0x8000,
     AUDIO_DEVICE_OUT_FM_TX                     = 0x10000,
     AUDIO_DEVICE_OUT_DIRECTOUTPUT              = 0x20000,
     AUDIO_DEVICE_OUT_DEFAULT                   = 0x80000,
+#else
+    AUDIO_DEVICE_OUT_DEFAULT                   = 0x8000,
+#endif
     AUDIO_DEVICE_OUT_ALL      = (AUDIO_DEVICE_OUT_EARPIECE |
                                  AUDIO_DEVICE_OUT_SPEAKER |
                                  AUDIO_DEVICE_OUT_WIRED_HEADSET |
@@ -312,11 +320,13 @@ typedef enum {
                                  AUDIO_DEVICE_OUT_AUX_DIGITAL |
                                  AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET |
                                  AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET |
+#ifdef QCOM_HARDWARE
                                  AUDIO_DEVICE_OUT_FM |
                                  AUDIO_DEVICE_OUT_ANC_HEADSET |
                                  AUDIO_DEVICE_OUT_ANC_HEADPHONE |
                                  AUDIO_DEVICE_OUT_FM_TX |
                                  AUDIO_DEVICE_OUT_DIRECTOUTPUT |
+#endif
                                  AUDIO_DEVICE_OUT_DEFAULT),
     AUDIO_DEVICE_OUT_ALL_A2DP = (AUDIO_DEVICE_OUT_BLUETOOTH_A2DP |
                                  AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES |
@@ -326,6 +336,7 @@ typedef enum {
                                  AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT),
 
     /* input devices */
+#ifdef QCOM_HARDWARE
     AUDIO_DEVICE_IN_COMMUNICATION         = 0x100000,
     AUDIO_DEVICE_IN_AMBIENT               = 0x200000,
     AUDIO_DEVICE_IN_BUILTIN_MIC           = 0x400000,
@@ -337,6 +348,16 @@ typedef enum {
     AUDIO_DEVICE_IN_ANC_HEADSET           = 0x10000000,
     AUDIO_DEVICE_IN_FM_RX                 = 0x20000000,
     AUDIO_DEVICE_IN_FM_RX_A2DP            = 0x40000000,
+#else
+    AUDIO_DEVICE_IN_COMMUNICATION         = 0x10000,
+    AUDIO_DEVICE_IN_AMBIENT               = 0x20000,
+    AUDIO_DEVICE_IN_BUILTIN_MIC           = 0x40000,
+    AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET = 0x80000,
+    AUDIO_DEVICE_IN_WIRED_HEADSET         = 0x100000,
+    AUDIO_DEVICE_IN_AUX_DIGITAL           = 0x200000,
+    AUDIO_DEVICE_IN_VOICE_CALL            = 0x400000,
+    AUDIO_DEVICE_IN_BACK_MIC              = 0x800000,
+#endif
     AUDIO_DEVICE_IN_DEFAULT               = 0x80000000,
 
     AUDIO_DEVICE_IN_ALL     = (AUDIO_DEVICE_IN_COMMUNICATION |
@@ -347,9 +368,11 @@ typedef enum {
                                AUDIO_DEVICE_IN_AUX_DIGITAL |
                                AUDIO_DEVICE_IN_VOICE_CALL |
                                AUDIO_DEVICE_IN_BACK_MIC |
+#ifdef QCOM_HARDWARE
                                AUDIO_DEVICE_IN_ANC_HEADSET |
                                AUDIO_DEVICE_IN_FM_RX |
                                AUDIO_DEVICE_IN_FM_RX_A2DP |
+#endif
                                AUDIO_DEVICE_IN_DEFAULT),
     AUDIO_DEVICE_IN_ALL_SCO = AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET,
 } audio_devices_t;
@@ -418,8 +441,10 @@ static inline bool audio_is_valid_format(uint32_t format)
     case AUDIO_FORMAT_HE_AAC_V1:
     case AUDIO_FORMAT_HE_AAC_V2:
     case AUDIO_FORMAT_VORBIS:
+#ifdef QCOM_HARDWARE
     case AUDIO_FORMAT_QCELP:
     case AUDIO_FORMAT_EVRC:
+#endif
         return true;
     default:
         return false;
