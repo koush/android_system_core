@@ -260,6 +260,32 @@ int do_insmod(int nargs, char **args)
     return do_insmod_inner(nargs, args, size);
 }
 
+int do_log(int nargs, char **args)
+{
+    char* par[nargs+3];
+    char* value;
+    int i;
+
+    par[0] = "exec";
+    par[1] = "/system/bin/log";
+    par[2] = "-tinit";
+    for (i = 1; i < nargs; ++i) {
+        value = args[i];
+        if (value[0] == '$') {
+            /* system property if value starts with '$' */
+            value++;
+            if (value[0] != '$') {
+                value = (char*) property_get(value);
+                if (!value) value = args[i];
+            }
+        }
+        par[i+2] = value;
+    }
+    par[nargs+2] = NULL;
+
+    return do_exec(nargs+2, par);
+}
+
 int do_mkdir(int nargs, char **args)
 {
     mode_t mode = 0755;
