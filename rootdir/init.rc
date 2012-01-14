@@ -484,3 +484,12 @@ service dumpstate /system/bin/dumpstate -s
     socket dumpstate stream 0660 shell log
     disabled
     oneshot
+
+# adb over network
+on property:service.adb.tcp.port=5555
+    stop adbd
+    start adbd
+on property:service.adb.tcp.port=-1
+    stop adbd
+    start adbd
+
