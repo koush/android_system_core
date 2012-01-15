@@ -154,7 +154,9 @@ int __android_log_write(int prio, const char *tag, const char *msg)
         !strncmp(tag, "QC-RIL", 6) ||
         !strncmp(tag, "QC-QMI", 6) ||
         !strncmp(tag, "QC-ONCRPC", 9) ||
-        !strncmp(tag, "QC-DSI", 6)
+        !strncmp(tag, "QC-DSI", 6) ||
+        !strcmp(tag, "QC-NETMGR-LIB") ||
+        !strcmp(tag, "QC-QDP")
         )
             log_id = LOG_ID_RADIO;
 
