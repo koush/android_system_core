@@ -242,6 +242,7 @@ static struct fs_path_config android_files[] = {
 		/* the following file is INTENTIONALLY set-uid, and IS included
 		 * in user builds. */
     { 06750, AID_ROOT,      AID_SHELL,     "system/bin/run-as" },
+    { 06750, AID_ROOT,      AID_SYSTEM,    "system/bin/rebootcmd" },
     { 00755, AID_ROOT,      AID_SHELL,     "system/bin/*" },
     { 00755, AID_ROOT,      AID_ROOT,      "system/lib/valgrind/*" },
     { 00755, AID_ROOT,      AID_SHELL,     "system/xbin/*" },
