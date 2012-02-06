@@ -306,10 +306,9 @@ void service_start(struct service *svc, const char *dynamic_args)
 /* The how field should be either SVC_DISABLED, SVC_RESET, or SVC_RESTART */
 static void service_stop_or_reset(struct service *svc, int how)
 {
-        /* we are no longer running, nor should we
-         * attempt to restart (yet)
-         */
-    svc->flags &= (~(SVC_RUNNING|SVC_RESTARTING));
+    /* The service is still SVC_RUNNING until its process exits, but if it has
+     * already exited it shoudn't attempt a restart yet. */
+    svc->flags &= (~SVC_RESTARTING);
 
     if ((how != SVC_DISABLED) && (how != SVC_RESET) && (how != SVC_RESTART)) {
         /* Hrm, an illegal flag.  Default to SVC_DISABLED */
