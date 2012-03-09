@@ -298,7 +298,7 @@ typedef enum {
     AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET         = 0x800,
     AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET         = 0x1000,
     AUDIO_DEVICE_OUT_FM                        = 0x2000,
-#ifdef QCOM_HARDWARE
+#if defined(QCOM_HARDWARE) && !defined(USES_AUDIO_LEGACY)
     AUDIO_DEVICE_OUT_ANC_HEADSET               = 0x4000,
     AUDIO_DEVICE_OUT_ANC_HEADPHONE             = 0x8000,
     AUDIO_DEVICE_OUT_FM_TX                     = 0x10000,
@@ -320,7 +320,7 @@ typedef enum {
                                  AUDIO_DEVICE_OUT_AUX_DIGITAL |
                                  AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET |
                                  AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET |
-#ifdef QCOM_HARDWARE
+#if defined(QCOM_HARDWARE) && !defined(USES_AUDIO_LEGACY)
                                  AUDIO_DEVICE_OUT_FM |
                                  AUDIO_DEVICE_OUT_ANC_HEADSET |
                                  AUDIO_DEVICE_OUT_ANC_HEADPHONE |
@@ -336,7 +336,7 @@ typedef enum {
                                  AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT),
 
     /* input devices */
-#ifdef QCOM_HARDWARE
+#if defined(QCOM_HARDWARE) && !defined(USES_AUDIO_LEGACY)
     AUDIO_DEVICE_IN_COMMUNICATION         = 0x100000,
     AUDIO_DEVICE_IN_AMBIENT               = 0x200000,
     AUDIO_DEVICE_IN_BUILTIN_MIC           = 0x400000,
@@ -368,7 +368,7 @@ typedef enum {
                                AUDIO_DEVICE_IN_AUX_DIGITAL |
                                AUDIO_DEVICE_IN_VOICE_CALL |
                                AUDIO_DEVICE_IN_BACK_MIC |
-#ifdef QCOM_HARDWARE
+#if defined(QCOM_HARDWARE) && !defined(USES_AUDIO_LEGACY)
                                AUDIO_DEVICE_IN_ANC_HEADSET |
                                AUDIO_DEVICE_IN_FM_RX |
                                AUDIO_DEVICE_IN_FM_RX_A2DP |
