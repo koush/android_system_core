@@ -23,7 +23,7 @@ class SocketClient;
 
 class FrameworkListener : public SocketListener {
 public:
-    static const int CMD_ARGS_MAX = 16;
+    static const int CMD_ARGS_MAX = 32;
 private:
     FrameworkCommandCollection *mCommands;
 
