@@ -362,10 +362,6 @@ void get_hardware_name(char *hardware, unsigned int *revision)
     int fd, n;
     char *x, *hw, *rev;
 
-    /* Hardware string was provided on kernel command line */
-    if (hardware[0])
-        return;
-
     fd = open("/proc/cpuinfo", O_RDONLY);
     if (fd < 0) return;
 
@@ -377,18 +373,21 @@ void get_hardware_name(char *hardware, unsigned int *revision)
     hw = strstr(data, "\nHardware");
     rev = strstr(data, "\nRevision");
 
-    if (hw) {
-        x = strstr(hw, ": ");
-        if (x) {
-            x += 2;
-            n = 0;
-            while (*x && *x != '\n') {
-                if (!isspace(*x))
-                    hardware[n++] = tolower(*x);
-                x++;
-                if (n == 31) break;
+    /* Hardware string was provided on kernel command line */
+    if (!hardware[0]) {
+        if (hw) {
+            x = strstr(hw, ": ");
+            if (x) {
+                x += 2;
+                n = 0;
+                while (*x && *x != '\n') {
+                    if (!isspace(*x))
+                        hardware[n++] = tolower(*x);
+                    x++;
+                    if (n == 31) break;
+                }
+                hardware[n] = 0;
             }
-            hardware[n] = 0;
         }
     }
 
