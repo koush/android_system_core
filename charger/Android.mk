@@ -19,6 +19,10 @@ LOCAL_C_INCLUDES := bootable/recovery
 LOCAL_STATIC_LIBRARIES := libminui libpixelflinger_static libpng
 LOCAL_STATIC_LIBRARIES += libz libstdc++ libcutils libc
 
+ifneq ($(BOARD_BATTERY_DEVICE_NAME),)
+LOCAL_CFLAGS += -DBATTERY_DEVICE_NAME=\"$(BOARD_BATTERY_DEVICE_NAME)\"
+endif
+
 include $(BUILD_EXECUTABLE)
 
 define _add-charger-image
