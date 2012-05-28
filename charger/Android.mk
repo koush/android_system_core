@@ -39,8 +39,13 @@ endef
 
 _img_modules :=
 _images :=
+ifneq ($(BOARD_CHARGER_RES),)
+$(foreach _img, $(call find-subdir-subdir-files, ../../../$(BOARD_CHARGER_RES), "*.png"), \
+  $(eval $(call _add-charger-image,$(_img))))
+else
 $(foreach _img, $(call find-subdir-subdir-files, "images", "*.png"), \
   $(eval $(call _add-charger-image,$(_img))))
+endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := charger_res_images
