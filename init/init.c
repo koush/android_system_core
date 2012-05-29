@@ -810,7 +810,7 @@ int main(int argc, char **argv)
     action_for_each_trigger("init", action_add_queue_tail);
 
     /* skip mounting filesystems in charger mode */
-    if (!charging_mode) {
+    if (!charging_mode_booting() && strcmp(bootmode, "charger") != 0) {
         action_for_each_trigger("early-fs", action_add_queue_tail);
         if (emmc_boot) {
             action_for_each_trigger("emmc-fs", action_add_queue_tail);
