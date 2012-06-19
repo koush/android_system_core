@@ -85,6 +85,7 @@ int main(int argc, char** argv)
         fread(tmp, BOOT_MAGIC_SIZE, 1, f);
         if (memcmp(tmp, BOOT_MAGIC, BOOT_MAGIC_SIZE) == 0)
             break;
+        fseek(f, i, SEEK_SET);
     }
     total_read = i;
     fread(tmp, BOOT_MAGIC_SIZE, 1, f);
