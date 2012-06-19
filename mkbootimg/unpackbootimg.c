@@ -80,6 +80,19 @@ int main(int argc, char** argv)
     boot_img_hdr header;
 
     //printf("Reading header...\n");
+    int i;
+    for (i = 0; i < 512; i++) {
+        fread(tmp, BOOT_MAGIC_SIZE, 1, f);
+        if (memcmp(tmp, BOOT_MAGIC, BOOT_MAGIC_SIZE) == 0)
+            break;
+    }
+    total_read = i;
+    fread(tmp, BOOT_MAGIC_SIZE, 1, f);
+    if (memcmp(tmp, BOOT_MAGIC, BOOT_MAGIC_SIZE) == 0) {
+        printf("Android boot magic not found.\n");
+        return 1;
+    }
+
     fread(&header, sizeof(header), 1, f);
     printf("BOARD_KERNEL_CMDLINE %s\n", header.cmdline);
     printf("BOARD_KERNEL_BASE %08x\n", header.kernel_addr - 0x00008000);
