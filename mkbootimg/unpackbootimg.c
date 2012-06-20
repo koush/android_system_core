@@ -120,7 +120,7 @@ int main(int argc, char** argv)
     sprintf(tmp, "%s/%s", directory, basename(filename));
     strcat(tmp, "-pagesize");
     char pagesizetmp[200];
-    sprintf(pagesizetmp, "%08x", header.page_size);
+    sprintf(pagesizetmp, "%d", header.page_size);
     write_string_to_file(tmp, pagesizetmp);
     
     total_read += sizeof(header);
