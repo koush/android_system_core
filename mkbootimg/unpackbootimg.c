@@ -98,7 +98,7 @@ int main(int argc, char** argv)
     fread(&header, sizeof(header), 1, f);
     printf("BOARD_KERNEL_CMDLINE %s\n", header.cmdline);
     printf("BOARD_KERNEL_BASE %08x\n", header.kernel_addr - 0x00008000);
-    printf("BOARD_PAGE_SIZE %08x\n", header.page_size);
+    printf("BOARD_PAGE_SIZE %d\n", header.page_size);
     
     if (pagesize == 0) {
         pagesize = header.page_size;
