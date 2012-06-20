@@ -81,18 +81,19 @@ int main(int argc, char** argv)
 
     //printf("Reading header...\n");
     int i;
-    for (i = 0; i < 512; i++) {
+    for (i = 0; i <= 512; i++) {
+        fseek(f, i, SEEK_SET);
         fread(tmp, BOOT_MAGIC_SIZE, 1, f);
         if (memcmp(tmp, BOOT_MAGIC, BOOT_MAGIC_SIZE) == 0)
             break;
-        fseek(f, i, SEEK_SET);
     }
     total_read = i;
-    fread(tmp, BOOT_MAGIC_SIZE, 1, f);
-    if (memcmp(tmp, BOOT_MAGIC, BOOT_MAGIC_SIZE) == 0) {
+    if (i > 512) {
         printf("Android boot magic not found.\n");
         return 1;
     }
+    fseek(f, i, SEEK_SET);
+    printf("Android magic found at: %d\n", i);
 
     fread(&header, sizeof(header), 1, f);
     printf("BOARD_KERNEL_CMDLINE %s\n", header.cmdline);
