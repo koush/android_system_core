@@ -152,7 +152,7 @@ int main(int argc, char **argv)
             board = val;
         } else if(!strcmp(arg,"--pagesize")) {
             pagesize = strtoul(val, 0, 10);
-            if ((pagesize != 2048) && (pagesize != 4096)) {
+            if ((pagesize != 2048) && (pagesize != 4096) && (pagesize != 8192)) {
                 fprintf(stderr,"error: unsupported page size %d\n", pagesize);
                 return -1;
             }
